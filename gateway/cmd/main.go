@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"strings"
 )
@@ -16,7 +17,7 @@ var sources []DataSource
 
 func init() {
 	sources = make([]DataSource, 0, 5)
-	addr, err := net.ResolveUDPAddr("udp4", ":0")
+	addr, err := net.ResolveUDPAddr("udp4", "239.0.0.1:9999")
 	if err != nil {
 		panic(err)
 	}
@@ -42,20 +43,24 @@ func init() {
 			break
 		}
 		parts := strings.Split(string(buf[:n]), "|")
-		if len(parts) < 2 {
+		if len(parts) < 3 {
 			continue
 		}
 		src := DataSource{
 			Controllable: parts[1] == "1",
-			Address:      rAddr.IP.String(),
+			Address:      net.JoinHostPort(rAddr.IP.String(), parts[2]),
 			Name:         parts[0],
 		}
 		sources = append(sources, src)
+		log.Println(len(sources))
+		if len(sources) == 3 {
+			break
+		}
 	}
 }
 
 func main() {
 	for _, s := range sources {
-		fmt.Println(s.Address)
+		fmt.Println(s.Address, s.Name)
 	}
 }
