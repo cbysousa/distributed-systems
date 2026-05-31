@@ -1,0 +1,12 @@
+syntax = "proto3"
+
+message TurnOnMessage{}
+message TurnOffMessage{}
+
+message GetStateMessage{}
+message GetStateResponse{
+  bool state = 1
+}
+
+
+
