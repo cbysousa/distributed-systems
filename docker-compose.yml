@@ -16,3 +16,13 @@ services:
       context: ./semaphore
     container_name: semaphore-listener
     network_mode: host
+
+ client:
+    build:
+      context: ./client
+    container_name: analytical-client
+    network_mode: host
+    stdin_open: true
+    tty: true
+    depends_on:
+      - gateway
