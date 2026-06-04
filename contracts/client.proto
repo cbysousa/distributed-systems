@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package client;
+
+import "cam.proto";
+import "lamppost.proto";
+import "semaphore.proto";
+
+option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
+
+message ClientRequest {
+  oneof request {
+    ListSourcesRequest list_sources = 1;
+    ListReadingsRequest list_readings = 2;
+    SendCommandRequest send_command = 3;
+  }
+}
+
+message ClientResponse {
+  bool success = 1;
+  string message = 2;
+
+  oneof response {
+    ListSourcesResponse list_sources = 3;
+    ListReadingsResponse list_readings = 4;
+    SendCommandResponse send_command = 5;
+  }
+}
+
+message ListSourcesRequest {}
+
+message SourceInfo {
+  string name = 1;
+  string address = 2;
+  string ip = 3;
+  int32 port = 4;
+  bool controllable = 5;
+  string status = 6;
+  int64 last_seen_unix_ms = 7;
+}
+
+message ListSourcesResponse {
+  repeated SourceInfo sources = 1;
+}
+
+message ListReadingsRequest {
+  string metric = 1;
+}
+
+message ReadingInfo {
+  string source_name = 1;
+  string source_type = 2;
+  string metric = 3;
+  double value = 4;
+  string unit = 5;
+  int64 timestamp_unix_ms = 6;
+}
+
+message ListReadingsResponse {
+  repeated ReadingInfo readings = 1;
+}
+
+message SendCommandRequest {
+  string source_name = 1;
+
+  oneof command {
+    cam.CamCommand cam = 2;
+    lamppost.LamppostCommand lamppost = 3;
+    semaphore.SemaphoreCommand semaphore = 4;
+  }
+}
+
+message SendCommandResponse {
+  bool success = 1;
+  string message = 2;
+  string source_status = 3;
+}

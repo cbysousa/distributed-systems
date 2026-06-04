@@ -1,18 +1,28 @@
 syntax = "proto3";
+package cam;
 
-option go_package = "./pb";
+option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
 
-message TurnOnMessage{}
-message TurnOffMessage{}
-
-message GetStateMessage{}
-message GetStateResponse{
-  bool state = 1;
+message CamCommand {
+  oneof command {
+    CamTurnOnRequest turn_on = 1;
+    CamTurnOffRequest turn_off = 2;
+    CamGetStateRequest get_state = 3;
+    CamSimulateFailureRequest simulate_failure = 4;
+  }
 }
 
+message CamTurnOnRequest {}
 
+message CamTurnOffRequest {}
 
+message CamGetStateRequest {}
 
+message CamSimulateFailureRequest {}
 
-
-
+message CamResponse {
+  bool success = 1;
+  string message = 2;
+  bool active = 3;
+  string status = 4;
+}
