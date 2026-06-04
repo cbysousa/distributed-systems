@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package readings;
+
+import "temperature.proto";
+import "air_quality.proto";
+
+option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
+
+message ReadingPacket {
+  string source_name = 1;
+  int64 timestamp_unix_ms = 2;
+
+  oneof reading {
+    temperature.TemperatureReading temperature = 3;
+    airquality.AirQualityReading air_quality = 4;
+  }
+}

@@ -3,64 +3,37 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
-	"strings"
+
+	"github.com/cbysousa/distributed-systems/internal/clientserver"
+	"github.com/cbysousa/distributed-systems/internal/discovery"
+	"github.com/cbysousa/distributed-systems/internal/readings"
+	"github.com/cbysousa/distributed-systems/internal/state"
 )
 
-type DataSource struct {
-	Controllable bool
-	Address      string
-	Name         string
-}
-
-var sources []DataSource
-
-func init() {
-	sources = make([]DataSource, 0, 5)
-	addr, err := net.ResolveUDPAddr("udp4", "239.0.0.1:9999")
-	if err != nil {
-		panic(err)
-	}
-	conn, err := net.ListenUDP("udp4", &net.UDPAddr{
-		IP:   net.IPv4zero,
-		Port: 0,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	defer conn.Close()
-
-	msg := "DISCOVER"
-	_, err = conn.WriteToUDP([]byte(msg), addr)
-	if err != nil {
-		panic(err)
-	}
-	buf := make([]byte, 1024)
-	for {
-		n, rAddr, err := conn.ReadFromUDP(buf)
-		if err != nil {
-			break
-		}
-		parts := strings.Split(string(buf[:n]), "|")
-		if len(parts) < 3 {
-			continue
-		}
-		src := DataSource{
-			Controllable: parts[1] == "1",
-			Address:      net.JoinHostPort(rAddr.IP.String(), parts[2]),
-			Name:         parts[0],
-		}
-		sources = append(sources, src)
-		log.Println(len(sources))
-		if len(sources) == 3 {
-			break
-		}
-	}
-}
-
 func main() {
-	for _, s := range sources {
-		fmt.Println(s.Address, s.Name)
+	sources, err := discovery.Discover(discovery.DefaultConfig())
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	gatewayState := state.NewGatewayState()
+	gatewayState.AddDiscoveredSources(sources)
+
+	for _, source := range gatewayState.ListSources() {
+		fmt.Println(source.Address, source.Name, source.Controllable, source.Status)
+	}
+
+	go func() {
+		if err := readings.StartUDPServer(readings.DefaultConfig(), gatewayState); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	go func() {
+		if err := clientserver.StartTCPServer(clientserver.DefaultConfig(), gatewayState); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	select {}
 }

@@ -1,23 +1,40 @@
 syntax = "proto3";
 
-option go_package = "./pb";
+package semaphore;
+
+option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
 
 enum SemaphoreState {
-  Red = 0;
-  Yellow = 1;
-  Green = 2;
+  SEMAPHORE_STATE_RED = 0;
+  SEMAPHORE_STATE_YELLOW = 1;
+  SEMAPHORE_STATE_GREEN = 2;
 }
 
-message ChangeStateMessage {}
-message ChangeStateResponse {
-  int32 timer = 1;
+message SemaphoreCommand {
+  oneof command {
+    SemaphoreChangeStateRequest change_state = 1;
+    SemaphoreGetStateRequest get_state = 2;
+    SemaphoreSetTimerRequest set_timer = 3;
+    SemaphoreSimulateFailureRequest simulate_failure = 4;
+  }
 }
 
-message GetStateMessage {}
-message GetStateResponse {
+message SemaphoreChangeStateRequest {
   SemaphoreState state = 1;
-  int32 timer = 2;
 }
 
+message SemaphoreGetStateRequest {}
 
+message SemaphoreSetTimerRequest {
+  int32 timer_seconds = 1;
+}
 
+message SemaphoreSimulateFailureRequest {}
+
+message SemaphoreResponse {
+  bool success = 1;
+  string message = 2;
+  SemaphoreState state = 3;
+  int32 timer_seconds = 4;
+  string status = 5;
+}

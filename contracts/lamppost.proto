@@ -1,14 +1,29 @@
 syntax = "proto3";
+<<<<<<< HEAD
 
 option go_package = "./pb";
+option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
 
-message TurnOnMessage{}
-message TurnOffMessage{}
-
-message GetStateMessage{}
-message GetStateResponse{
-  bool state = 1;
+message LamppostCommand {
+  oneof command {
+    LamppostTurnOnRequest turn_on = 1;
+    LamppostTurnOffRequest turn_off = 2;
+    LamppostGetStateRequest get_state = 3;
+    LamppostSimulateFailureRequest simulate_failure = 4;
+  }
 }
 
+message LamppostTurnOnRequest {}
 
+message LamppostTurnOffRequest {}
 
+message LamppostGetStateRequest {}
+
+message LamppostSimulateFailureRequest {}
+
+message LamppostResponse {
+  bool success = 1;
+  string message = 2;
+  bool active = 3;
+  string status = 4;
+}

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package airquality;
+
+option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
+
+message AirQualityReading {
+  double co2_ppm = 1;
+  double particulate_matter_ug_m3 = 2;
+  double air_quality_index = 3;
+}

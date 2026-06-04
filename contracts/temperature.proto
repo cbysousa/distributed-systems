@@ -1,8 +1,10 @@
 syntax = "proto3";
 
-option go_package = "./pb";
+package temperature;
+
+option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
 
 message TemperatureReading {
-  float value = 1;
-  string unit = 2;
+  double temperature_celsius = 1;
+  double humidity_percent = 2;
 }
