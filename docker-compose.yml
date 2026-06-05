@@ -17,7 +17,13 @@ services:
     container_name: semaphore-listener
     network_mode: host
 
- client:
+  weather_station:
+    build:
+      context: ./weather-sensor
+    container_name: weather-sensor
+    network_mode: host
+    
+  client:
     build:
       context: ./client
     container_name: analytical-client
