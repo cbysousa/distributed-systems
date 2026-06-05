@@ -1,11 +1,13 @@
-syntax = "proto3"
+syntax = "proto3";
+
+option go_package = "./pb";
 
 message TurnOnMessage{}
 message TurnOffMessage{}
 
 message GetStateMessage{}
 message GetStateResponse{
-  bool state = 1
+  bool state = 1;
 }
 
 
