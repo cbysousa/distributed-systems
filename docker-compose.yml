@@ -1,0 +1,28 @@
+services:
+  cam:
+    build:
+      context: ./cam
+    container_name: cam-listener
+    network_mode: host
+
+  lamppost:
+    build:
+      context: ./lamppost
+    container_name: lamppost-listener
+    network_mode: host
+
+  semaphore:
+    build:
+      context: ./semaphore
+    container_name: semaphore-listener
+    network_mode: host
+
+ client:
+    build:
+      context: ./client
+    container_name: analytical-client
+    network_mode: host
+    stdin_open: true
+    tty: true
+    depends_on:
+      - gateway
