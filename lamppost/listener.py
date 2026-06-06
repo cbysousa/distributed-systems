@@ -16,8 +16,8 @@ NAME = "lamppost"
 SOURCE_TYPE = "lamppost"
 STATUS_ACTIVE = "ACTIVE"
 STATUS_OFFLINE = "OFFLINE"
-OFFLINE_SECONDS = 15
 READING_INTERVAL_SECONDS = 5
+FAILURE_DURATION_SECONDS = 15
 
 gateway_ip = None
 gateway_readings_port = None
@@ -27,48 +27,43 @@ class LamppostState:
     def __init__(self):
         self.lock = threading.Lock()
         self.active = True
+        self.light_on = True
         self.luminosity_percent = 100.0
         self.energy_consumption_kwh = 0.0
         self.last_energy_update = time.time()
-        self.recovery_version = 0
+        self.failure_until = 0
 
     def status(self):
-        return STATUS_ACTIVE if self.active else STATUS_OFFLINE
+        return STATUS_OFFLINE if self.is_failed() else STATUS_ACTIVE
+
+    def is_failed(self):
+        return time.time() < self.failure_until
 
     def update_energy(self):
         now = time.time()
         elapsed_hours = (now - self.last_energy_update) / 3600
         self.last_energy_update = now
 
-        if self.active:
+        if self.active and self.light_on:
             power_kw = 0.08 * (self.luminosity_percent / 100)
             self.energy_consumption_kwh += power_kw * elapsed_hours
 
     def turn_on(self):
         with self.lock:
             self.update_energy()
-            self.recovery_version += 1
             self.active = True
+            self.light_on = True
             if self.luminosity_percent == 0:
                 self.luminosity_percent = 100.0
-            return self.response(True, "lamppost turned on")
+            return self.response(True, "lamppost light turned on")
 
     def turn_off(self):
         with self.lock:
             self.update_energy()
-            self.recovery_version += 1
-            recovery_version = self.recovery_version
-            self.active = False
+            self.active = True
+            self.light_on = False
             self.luminosity_percent = 0.0
-            response = self.response(True, "lamppost turned off")
-
-        threading.Thread(
-            target=self.restore_after_delay,
-            args=(recovery_version,),
-            daemon=True,
-        ).start()
-
-        return response
+            return self.response(True, "lamppost light turned off")
 
     def get_state(self):
         with self.lock:
@@ -78,36 +73,25 @@ class LamppostState:
     def simulate_failure(self):
         with self.lock:
             self.update_energy()
-            self.recovery_version += 1
-            self.active = False
+            self.failure_until = time.time() + FAILURE_DURATION_SECONDS
+            self.light_on = False
             self.luminosity_percent = 0.0
-            return self.response(True, "lamppost failure simulated")
+            return self.response(True, f"lamppost failure simulated for {FAILURE_DURATION_SECONDS} seconds")
 
     def set_luminosity(self, luminosity_percent):
         with self.lock:
             self.update_energy()
             self.luminosity_percent = max(0.0, min(100.0, luminosity_percent))
-            self.active = self.luminosity_percent > 0
-            return self.response(True, "lamppost luminosity updated")
-
-    def restore_after_delay(self, recovery_version):
-        time.sleep(OFFLINE_SECONDS)
-
-        with self.lock:
-            if recovery_version != self.recovery_version:
-                return
-
             self.active = True
-            self.luminosity_percent = 100.0
-            self.last_energy_update = time.time()
-
-        print(f"[{NAME}] restored after {OFFLINE_SECONDS}s")
+            self.light_on = self.luminosity_percent > 0
+            return self.response(True, "lamppost luminosity updated")
 
     def reading_packet(self):
         with self.lock:
-            self.update_energy()
-            if not self.active:
+            if self.is_failed():
                 return None
+
+            self.update_energy()
 
             packet = readings_pb2.ReadingPacket(
                 source_name=NAME,
@@ -115,10 +99,11 @@ class LamppostState:
                 lamppost=lamppost_pb2.LamppostReading(
                     luminosity_percent=self.luminosity_percent,
                     energy_consumption_kwh=self.energy_consumption_kwh,
+                    light_on=self.light_on,
                 ),
             )
 
-            return packet, self.luminosity_percent, self.energy_consumption_kwh
+            return packet, self.luminosity_percent, self.energy_consumption_kwh, self.light_on
 
     def response(self, success, message):
         return lamppost_pb2.LamppostResponse(
@@ -128,6 +113,7 @@ class LamppostState:
             status=self.status(),
             luminosity_percent=self.luminosity_percent,
             energy_consumption_kwh=self.energy_consumption_kwh,
+            light_on=self.light_on,
         )
 
 
@@ -187,6 +173,9 @@ def listen_multicast():
         gateway_readings_port = request.readings_port
 
         with lamppost_state.lock:
+            if lamppost_state.is_failed():
+                continue
+
             response = discovery_pb2.DiscoveryResponse(
                 source_name=NAME,
                 source_type=SOURCE_TYPE,
@@ -206,13 +195,13 @@ def send_readings():
         if gateway_ip and gateway_readings_port:
             reading = lamppost_state.reading_packet()
             if reading:
-                packet, luminosity_percent, energy_consumption_kwh = reading
+                packet, luminosity_percent, energy_consumption_kwh, light_on = reading
 
                 try:
                     sock.sendto(packet.SerializeToString(), (gateway_ip, gateway_readings_port))
                     print(
                         f"[{NAME}] sent luminosity={luminosity_percent}% "
-                        f"energy={energy_consumption_kwh:.4f}kWh"
+                        f"energy={energy_consumption_kwh:.4f}kWh light_on={light_on}"
                     )
                 except Exception as error:
                     print(f"[{NAME}] failed to send reading: {error}")
@@ -241,12 +230,17 @@ def handle_command(command):
         status=lamppost_state.status(),
         luminosity_percent=lamppost_state.luminosity_percent,
         energy_consumption_kwh=lamppost_state.energy_consumption_kwh,
+        light_on=lamppost_state.light_on,
     )
 
 
 def handle_client(conn, addr):
     with conn:
         try:
+            with lamppost_state.lock:
+                if lamppost_state.is_failed():
+                    return
+
             data = read_message(conn)
             command = lamppost_pb2.LamppostCommand()
             command.ParseFromString(data)

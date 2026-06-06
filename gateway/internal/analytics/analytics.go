@@ -18,23 +18,26 @@ const (
 )
 
 type Query struct {
+	SourceName    string
 	Metric        string
 	Operation     Operation
 	WindowSeconds int64
 }
 
 type Result struct {
+	SourceName    string
 	Metric        string
 	Operation     Operation
 	Value         float64
+	Unit          string
 	SampleCount   int
 	WindowSeconds int64
 }
 
 func Run(readings []state.Reading, query Query) (Result, error) {
-	values := filterValues(readings, query)
+	values, unit := filterValues(readings, query)
 	if len(values) == 0 {
-		return Result{}, fmt.Errorf("no readings found for metric %s", query.Metric)
+		return Result{}, fmt.Errorf("no readings found for source %s and metric %s", query.SourceName, query.Metric)
 	}
 
 	value, err := calculate(values, query.Operation)
@@ -43,16 +46,19 @@ func Run(readings []state.Reading, query Query) (Result, error) {
 	}
 
 	return Result{
+		SourceName:    query.SourceName,
 		Metric:        query.Metric,
 		Operation:     query.Operation,
 		Value:         value,
+		Unit:          unit,
 		SampleCount:   len(values),
 		WindowSeconds: query.WindowSeconds,
 	}, nil
 }
 
-func filterValues(readings []state.Reading, query Query) []float64 {
+func filterValues(readings []state.Reading, query Query) ([]float64, string) {
 	values := make([]float64, 0)
+	unit := ""
 	cutoff := time.Time{}
 
 	if query.WindowSeconds > 0 {
@@ -60,6 +66,10 @@ func filterValues(readings []state.Reading, query Query) []float64 {
 	}
 
 	for _, reading := range readings {
+		if reading.SourceName != query.SourceName {
+			continue
+		}
+
 		if reading.Metric != query.Metric {
 			continue
 		}
@@ -68,10 +78,14 @@ func filterValues(readings []state.Reading, query Query) []float64 {
 			continue
 		}
 
+		if unit == "" {
+			unit = reading.Unit
+		}
+
 		values = append(values, reading.Value)
 	}
 
-	return values
+	return values, unit
 }
 
 func calculate(values []float64, operation Operation) (float64, error) {

@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0elamppost.proto\x12\x08lamppost\"\xc6\x02\n\x0fLamppostCommand\x12\x32\n\x07turn_on\x18\x01 \x01(\x0b\x32\x1f.lamppost.LamppostTurnOnRequestH\x00\x12\x34\n\x08turn_off\x18\x02 \x01(\x0b\x32 .lamppost.LamppostTurnOffRequestH\x00\x12\x36\n\tget_state\x18\x03 \x01(\x0b\x32!.lamppost.LamppostGetStateRequestH\x00\x12\x44\n\x10simulate_failure\x18\x04 \x01(\x0b\x32(.lamppost.LamppostSimulateFailureRequestH\x00\x12@\n\x0eset_luminosity\x18\x05 \x01(\x0b\x32&.lamppost.LamppostSetLuminosityRequestH\x00\x42\t\n\x07\x63ommand\"\x17\n\x15LamppostTurnOnRequest\"\x18\n\x16LamppostTurnOffRequest\"\x19\n\x17LamppostGetStateRequest\" \n\x1eLamppostSimulateFailureRequest\":\n\x1cLamppostSetLuminosityRequest\x12\x1a\n\x12luminosity_percent\x18\x01 \x01(\x01\"\x90\x01\n\x10LamppostResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x0e\n\x06\x61\x63tive\x18\x03 \x01(\x08\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x1a\n\x12luminosity_percent\x18\x05 \x01(\x01\x12\x1e\n\x16\x65nergy_consumption_kwh\x18\x06 \x01(\x01\"M\n\x0fLamppostReading\x12\x1a\n\x12luminosity_percent\x18\x01 \x01(\x01\x12\x1e\n\x16\x65nergy_consumption_kwh\x18\x02 \x01(\x01\x42>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0elamppost.proto\x12\x08lamppost\"\xc6\x02\n\x0fLamppostCommand\x12\x32\n\x07turn_on\x18\x01 \x01(\x0b\x32\x1f.lamppost.LamppostTurnOnRequestH\x00\x12\x34\n\x08turn_off\x18\x02 \x01(\x0b\x32 .lamppost.LamppostTurnOffRequestH\x00\x12\x36\n\tget_state\x18\x03 \x01(\x0b\x32!.lamppost.LamppostGetStateRequestH\x00\x12\x44\n\x10simulate_failure\x18\x04 \x01(\x0b\x32(.lamppost.LamppostSimulateFailureRequestH\x00\x12@\n\x0eset_luminosity\x18\x05 \x01(\x0b\x32&.lamppost.LamppostSetLuminosityRequestH\x00\x42\t\n\x07\x63ommand\"\x17\n\x15LamppostTurnOnRequest\"\x18\n\x16LamppostTurnOffRequest\"\x19\n\x17LamppostGetStateRequest\" \n\x1eLamppostSimulateFailureRequest\":\n\x1cLamppostSetLuminosityRequest\x12\x1a\n\x12luminosity_percent\x18\x01 \x01(\x01\"\xa2\x01\n\x10LamppostResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x0e\n\x06\x61\x63tive\x18\x03 \x01(\x08\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x1a\n\x12luminosity_percent\x18\x05 \x01(\x01\x12\x1e\n\x16\x65nergy_consumption_kwh\x18\x06 \x01(\x01\x12\x10\n\x08light_on\x18\x07 \x01(\x08\"_\n\x0fLamppostReading\x12\x1a\n\x12luminosity_percent\x18\x01 \x01(\x01\x12\x1e\n\x16\x65nergy_consumption_kwh\x18\x02 \x01(\x01\x12\x10\n\x08light_on\x18\x03 \x01(\x08\x42>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -45,7 +45,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_LAMPPOSTSETLUMINOSITYREQUEST']._serialized_start=469
   _globals['_LAMPPOSTSETLUMINOSITYREQUEST']._serialized_end=527
   _globals['_LAMPPOSTRESPONSE']._serialized_start=530
-  _globals['_LAMPPOSTRESPONSE']._serialized_end=674
-  _globals['_LAMPPOSTREADING']._serialized_start=676
-  _globals['_LAMPPOSTREADING']._serialized_end=753
+  _globals['_LAMPPOSTRESPONSE']._serialized_end=692
+  _globals['_LAMPPOSTREADING']._serialized_start=694
+  _globals['_LAMPPOSTREADING']._serialized_end=789
 # @@protoc_insertion_point(module_scope)

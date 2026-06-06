@@ -12,9 +12,11 @@ import (
 )
 
 type Result struct {
-	Success bool
-	Message string
-	Status  string
+	Success           bool
+	Message           string
+	Status            string
+	LuminosityPercent float64
+	LightOn           bool
 }
 
 func SendCommand(source state.Source, request *smartpb.SendCommandRequest) (Result, error) {
@@ -62,9 +64,11 @@ func sendLamppostCommand(conn net.Conn, command *smartpb.LamppostCommand) (Resul
 	}
 
 	return Result{
-		Success: response.Success,
-		Message: response.Message,
-		Status:  lamppostStatus(command, response),
+		Success:           response.Success,
+		Message:           response.Message,
+		Status:            lamppostStatus(command, response),
+		LuminosityPercent: response.LuminosityPercent,
+		LightOn:           response.LightOn,
 	}, nil
 }
 
@@ -74,10 +78,10 @@ func lamppostStatus(command *smartpb.LamppostCommand, response *smartpb.Lamppost
 	}
 
 	switch command.Command.(type) {
-	case *smartpb.LamppostCommand_TurnOn:
+	case *smartpb.LamppostCommand_TurnOn, *smartpb.LamppostCommand_TurnOff:
 		return state.StatusActive
-	case *smartpb.LamppostCommand_TurnOff, *smartpb.LamppostCommand_SimulateFailure:
-		return state.StatusOffline
+	case *smartpb.LamppostCommand_SimulateFailure:
+		return ""
 	}
 
 	if response.Status != "" {

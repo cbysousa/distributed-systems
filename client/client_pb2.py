@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 import lamppost_pb2 as lamppost__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x63lient.proto\x12\x06\x63lient\x1a\x0elamppost.proto\"\xe7\x01\n\rClientRequest\x12\x32\n\x0clist_sources\x18\x01 \x01(\x0b\x32\x1a.client.ListSourcesRequestH\x00\x12\x34\n\rlist_readings\x18\x02 \x01(\x0b\x32\x1b.client.ListReadingsRequestH\x00\x12\x32\n\x0csend_command\x18\x03 \x01(\x0b\x32\x1a.client.SendCommandRequestH\x00\x12-\n\taggregate\x18\x04 \x01(\x0b\x32\x18.client.AggregateRequestH\x00\x42\t\n\x07request\"\x8f\x02\n\x0e\x43lientResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x33\n\x0clist_sources\x18\x03 \x01(\x0b\x32\x1b.client.ListSourcesResponseH\x00\x12\x35\n\rlist_readings\x18\x04 \x01(\x0b\x32\x1c.client.ListReadingsResponseH\x00\x12\x33\n\x0csend_command\x18\x05 \x01(\x0b\x32\x1b.client.SendCommandResponseH\x00\x12.\n\taggregate\x18\x06 \x01(\x0b\x32\x19.client.AggregateResponseH\x00\x42\n\n\x08response\"\x14\n\x12ListSourcesRequest\"\x9b\x01\n\nSourceInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x01(\t\x12\n\n\x02ip\x18\x03 \x01(\t\x12\x0c\n\x04port\x18\x04 \x01(\x05\x12\x14\n\x0c\x63ontrollable\x18\x05 \x01(\x08\x12\x0e\n\x06status\x18\x06 \x01(\t\x12\x19\n\x11last_seen_unix_ms\x18\x07 \x01(\x03\x12\x13\n\x0bsource_type\x18\x08 \x01(\t\":\n\x13ListSourcesResponse\x12#\n\x07sources\x18\x01 \x03(\x0b\x32\x12.client.SourceInfo\"%\n\x13ListReadingsRequest\x12\x0e\n\x06metric\x18\x01 \x01(\t\"\x7f\n\x0bReadingInfo\x12\x13\n\x0bsource_name\x18\x01 \x01(\t\x12\x13\n\x0bsource_type\x18\x02 \x01(\t\x12\x0e\n\x06metric\x18\x03 \x01(\t\x12\r\n\x05value\x18\x04 \x01(\x01\x12\x0c\n\x04unit\x18\x05 \x01(\t\x12\x19\n\x11timestamp_unix_ms\x18\x06 \x01(\x03\"=\n\x14ListReadingsResponse\x12%\n\x08readings\x18\x01 \x03(\x0b\x32\x13.client.ReadingInfo\"V\n\x12SendCommandRequest\x12\x13\n\x0bsource_name\x18\x01 \x01(\t\x12+\n\x08lamppost\x18\x02 \x01(\x0b\x32\x19.lamppost.LamppostCommand\"N\n\x13SendCommandResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x15\n\rsource_status\x18\x03 \x01(\t\"i\n\x10\x41ggregateRequest\x12\x0e\n\x06metric\x18\x01 \x01(\t\x12-\n\toperation\x18\x02 \x01(\x0e\x32\x1a.client.AggregateOperation\x12\x16\n\x0ewindow_seconds\x18\x03 \x01(\x03\"\x8f\x01\n\x11\x41ggregateResponse\x12\x0e\n\x06metric\x18\x01 \x01(\t\x12-\n\toperation\x18\x02 \x01(\x0e\x32\x1a.client.AggregateOperation\x12\r\n\x05value\x18\x03 \x01(\x01\x12\x14\n\x0csample_count\x18\x04 \x01(\x05\x12\x16\n\x0ewindow_seconds\x18\x05 \x01(\x03*\x8b\x01\n\x12\x41ggregateOperation\x12\x1b\n\x17\x41GGREGATE_OPERATION_AVG\x10\x00\x12\x1e\n\x1a\x41GGREGATE_OPERATION_STDDEV\x10\x01\x12\x1b\n\x17\x41GGREGATE_OPERATION_MIN\x10\x02\x12\x1b\n\x17\x41GGREGATE_OPERATION_MAX\x10\x03\x42>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x63lient.proto\x12\x06\x63lient\x1a\x0elamppost.proto\"\xe7\x01\n\rClientRequest\x12\x32\n\x0clist_sources\x18\x01 \x01(\x0b\x32\x1a.client.ListSourcesRequestH\x00\x12\x34\n\rlist_readings\x18\x02 \x01(\x0b\x32\x1b.client.ListReadingsRequestH\x00\x12\x32\n\x0csend_command\x18\x03 \x01(\x0b\x32\x1a.client.SendCommandRequestH\x00\x12-\n\taggregate\x18\x04 \x01(\x0b\x32\x18.client.AggregateRequestH\x00\x42\t\n\x07request\"\x8f\x02\n\x0e\x43lientResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x33\n\x0clist_sources\x18\x03 \x01(\x0b\x32\x1b.client.ListSourcesResponseH\x00\x12\x35\n\rlist_readings\x18\x04 \x01(\x0b\x32\x1c.client.ListReadingsResponseH\x00\x12\x33\n\x0csend_command\x18\x05 \x01(\x0b\x32\x1b.client.SendCommandResponseH\x00\x12.\n\taggregate\x18\x06 \x01(\x0b\x32\x19.client.AggregateResponseH\x00\x42\n\n\x08response\"\x14\n\x12ListSourcesRequest\"\x9b\x01\n\nSourceInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x01(\t\x12\n\n\x02ip\x18\x03 \x01(\t\x12\x0c\n\x04port\x18\x04 \x01(\x05\x12\x14\n\x0c\x63ontrollable\x18\x05 \x01(\x08\x12\x0e\n\x06status\x18\x06 \x01(\t\x12\x19\n\x11last_seen_unix_ms\x18\x07 \x01(\x03\x12\x13\n\x0bsource_type\x18\x08 \x01(\t\":\n\x13ListSourcesResponse\x12#\n\x07sources\x18\x01 \x03(\x0b\x32\x12.client.SourceInfo\"\x15\n\x13ListReadingsRequest\"\x7f\n\x0bReadingInfo\x12\x13\n\x0bsource_name\x18\x01 \x01(\t\x12\x13\n\x0bsource_type\x18\x02 \x01(\t\x12\x0e\n\x06metric\x18\x03 \x01(\t\x12\r\n\x05value\x18\x04 \x01(\x01\x12\x0c\n\x04unit\x18\x05 \x01(\t\x12\x19\n\x11timestamp_unix_ms\x18\x06 \x01(\x03\"=\n\x14ListReadingsResponse\x12%\n\x08readings\x18\x01 \x03(\x0b\x32\x13.client.ReadingInfo\"V\n\x12SendCommandRequest\x12\x13\n\x0bsource_name\x18\x01 \x01(\t\x12+\n\x08lamppost\x18\x02 \x01(\x0b\x32\x19.lamppost.LamppostCommand\"|\n\x13SendCommandResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x15\n\rsource_status\x18\x03 \x01(\t\x12\x1a\n\x12luminosity_percent\x18\x04 \x01(\x01\x12\x10\n\x08light_on\x18\x05 \x01(\x08\"~\n\x10\x41ggregateRequest\x12\x13\n\x0bsource_name\x18\x01 \x01(\t\x12\x0e\n\x06metric\x18\x02 \x01(\t\x12-\n\toperation\x18\x03 \x01(\x0e\x32\x1a.client.AggregateOperation\x12\x16\n\x0ewindow_seconds\x18\x04 \x01(\x03\"\xb2\x01\n\x11\x41ggregateResponse\x12\x13\n\x0bsource_name\x18\x01 \x01(\t\x12\x0e\n\x06metric\x18\x02 \x01(\t\x12-\n\toperation\x18\x03 \x01(\x0e\x32\x1a.client.AggregateOperation\x12\r\n\x05value\x18\x04 \x01(\x01\x12\x14\n\x0csample_count\x18\x05 \x01(\x05\x12\x16\n\x0ewindow_seconds\x18\x06 \x01(\x03\x12\x0c\n\x04unit\x18\x07 \x01(\t*\x8b\x01\n\x12\x41ggregateOperation\x12\x1b\n\x17\x41GGREGATE_OPERATION_AVG\x10\x00\x12\x1e\n\x1a\x41GGREGATE_OPERATION_STDDEV\x10\x01\x12\x1b\n\x17\x41GGREGATE_OPERATION_MIN\x10\x02\x12\x1b\n\x17\x41GGREGATE_OPERATION_MAX\x10\x03\x42>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,8 +33,8 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'client_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z<github.com/cbysousa/distributed-systems/internal/proto;proto'
-  _globals['_AGGREGATEOPERATION']._serialized_start=1441
-  _globals['_AGGREGATEOPERATION']._serialized_end=1580
+  _globals['_AGGREGATEOPERATION']._serialized_start=1527
+  _globals['_AGGREGATEOPERATION']._serialized_end=1666
   _globals['_CLIENTREQUEST']._serialized_start=41
   _globals['_CLIENTREQUEST']._serialized_end=272
   _globals['_CLIENTRESPONSE']._serialized_start=275
@@ -46,17 +46,17 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_LISTSOURCESRESPONSE']._serialized_start=728
   _globals['_LISTSOURCESRESPONSE']._serialized_end=786
   _globals['_LISTREADINGSREQUEST']._serialized_start=788
-  _globals['_LISTREADINGSREQUEST']._serialized_end=825
-  _globals['_READINGINFO']._serialized_start=827
-  _globals['_READINGINFO']._serialized_end=954
-  _globals['_LISTREADINGSRESPONSE']._serialized_start=956
-  _globals['_LISTREADINGSRESPONSE']._serialized_end=1017
-  _globals['_SENDCOMMANDREQUEST']._serialized_start=1019
-  _globals['_SENDCOMMANDREQUEST']._serialized_end=1105
-  _globals['_SENDCOMMANDRESPONSE']._serialized_start=1107
-  _globals['_SENDCOMMANDRESPONSE']._serialized_end=1185
-  _globals['_AGGREGATEREQUEST']._serialized_start=1187
-  _globals['_AGGREGATEREQUEST']._serialized_end=1292
-  _globals['_AGGREGATERESPONSE']._serialized_start=1295
-  _globals['_AGGREGATERESPONSE']._serialized_end=1438
+  _globals['_LISTREADINGSREQUEST']._serialized_end=809
+  _globals['_READINGINFO']._serialized_start=811
+  _globals['_READINGINFO']._serialized_end=938
+  _globals['_LISTREADINGSRESPONSE']._serialized_start=940
+  _globals['_LISTREADINGSRESPONSE']._serialized_end=1001
+  _globals['_SENDCOMMANDREQUEST']._serialized_start=1003
+  _globals['_SENDCOMMANDREQUEST']._serialized_end=1089
+  _globals['_SENDCOMMANDRESPONSE']._serialized_start=1091
+  _globals['_SENDCOMMANDRESPONSE']._serialized_end=1215
+  _globals['_AGGREGATEREQUEST']._serialized_start=1217
+  _globals['_AGGREGATEREQUEST']._serialized_end=1343
+  _globals['_AGGREGATERESPONSE']._serialized_start=1346
+  _globals['_AGGREGATERESPONSE']._serialized_end=1524
 # @@protoc_insertion_point(module_scope)

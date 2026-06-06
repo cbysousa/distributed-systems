@@ -9,6 +9,22 @@ import lamppost_pb2
 GATEWAY_HOST = "127.0.0.1"
 GATEWAY_PORT = 12000
 
+METRICS_BY_SOURCE_TYPE = {
+    "weather": [
+        "temperature_celsius",
+        "humidity_percent",
+    ],
+    "air_quality": [
+        "co2_ppm",
+        "particulate_matter_ug_m3",
+        "air_quality_index",
+    ],
+    "lamppost": [
+        "luminosity_percent",
+        "energy_consumption_kwh",
+    ],
+}
+
 
 def read_exact(sock, size):
     data = b""
@@ -58,9 +74,9 @@ def request_list_sources():
     )
 
 
-def request_list_readings(metric=""):
+def request_list_readings():
     return client_pb2.ClientRequest(
-        list_readings=client_pb2.ListReadingsRequest(metric=metric),
+        list_readings=client_pb2.ListReadingsRequest(),
     )
 
 
@@ -73,9 +89,10 @@ def request_lamppost_command(source_name, command):
     )
 
 
-def request_aggregate(metric, operation, window_seconds):
+def request_aggregate(source_name, metric, operation, window_seconds):
     return client_pb2.ClientRequest(
         aggregate=client_pb2.AggregateRequest(
+            source_name=source_name,
             metric=metric,
             operation=operation,
             window_seconds=window_seconds,
@@ -95,7 +112,7 @@ def print_sources(response):
 
     print("\nFontes de dados:")
     print("-" * 96)
-    print(f"{'Nome':<24} {'Tipo':<16} {'Status':<10} {'Controlavel':<12} {'Endereco':<22} Last seen")
+    print(f"{'Nome':<24} {'Tipo':<16} {'Status':<10} {'Controlavel':<12} {'Endereco':<22} Ultimo Visto")
     print("-" * 96)
 
     for source in sources:
@@ -143,6 +160,10 @@ def print_command_response(response):
     print(f"\nResultado: {result}")
     print(f"Mensagem: {command.message}")
     print(f"Status da fonte: {status}")
+    if command.success:
+        light_state = "ligada" if command.light_on else "desligada"
+        print(f"Luminosidade: {command.luminosity_percent:.2f}%")
+        print(f"Luz: {light_state}")
 
 
 def print_aggregate_response(response):
@@ -153,10 +174,12 @@ def print_aggregate_response(response):
     aggregate = response.aggregate
     window = "todas as leituras" if aggregate.window_seconds <= 0 else f"ultimos {aggregate.window_seconds}s"
 
-    print("\nResultado da consulta analitica:")
+    print("\nResultado da consulta:")
+    print(f"Fonte: {aggregate.source_name}")
     print(f"Metrica: {aggregate.metric}")
     print(f"Operacao: {aggregate_operation_name(aggregate.operation)}")
     print(f"Valor: {aggregate.value:.4f}")
+    print(f"Unidade: {aggregate.unit or '-'}")
     print(f"Amostras: {aggregate.sample_count}")
     print(f"Janela: {window}")
 
@@ -178,24 +201,18 @@ def list_sources():
     print_sources(response)
 
 
-def list_readings(metric=""):
-    response = send_request(request_list_readings(metric))
+def list_readings():
+    response = send_request(request_list_readings())
     print_readings(response)
 
 
 def aggregate_query():
-    print("\nMetricas comuns:")
-    print("- temperature_celsius")
-    print("- humidity_percent")
-    print("- co2_ppm")
-    print("- particulate_matter_ug_m3")
-    print("- air_quality_index")
-    print("- luminosity_percent")
-    print("- energy_consumption_kwh")
+    source = select_source()
+    if not source:
+        return
 
-    metric = input("Digite a metrica: ").strip()
+    metric = select_metric(source)
     if not metric:
-        print("Metrica obrigatoria.")
         return
 
     operation = read_aggregate_operation()
@@ -206,17 +223,77 @@ def aggregate_query():
     if window_seconds is None:
         return
 
-    response = send_request(request_aggregate(metric, operation, window_seconds))
+    response = send_request(request_aggregate(source.name, metric, operation, window_seconds))
     print_aggregate_response(response)
 
 
-def get_controllable_sources():
+def get_sources():
     response = send_request(request_list_sources())
     if not response or not response.HasField("list_sources"):
         print_gateway_message(response)
         return []
 
-    return [source for source in response.list_sources.sources if source.controllable]
+    return list(response.list_sources.sources)
+
+
+def select_source():
+    sources = get_sources()
+    if not sources:
+        print("Nenhuma fonte de dados encontrada.")
+        return None
+
+    print("\nFontes de dados:")
+    for index, source in enumerate(sources, start=1):
+        print(f"{index}. {source.name} | tipo={source.source_type} | status={source.status}")
+    print("0. Voltar")
+
+    while True:
+        option = input("Escolha uma fonte: ").strip()
+        if option == "0":
+            return None
+
+        try:
+            source_index = int(option)
+        except ValueError:
+            print("Opcao invalida.")
+            continue
+
+        if 1 <= source_index <= len(sources):
+            return sources[source_index - 1]
+
+        print("Opcao invalida.")
+
+
+def select_metric(source):
+    metrics = METRICS_BY_SOURCE_TYPE.get(source.source_type, [])
+    if not metrics:
+        print(f"Nenhuma metrica de consulta configurada para o tipo {source.source_type}.")
+        return None
+
+    print(f"\nMetricas disponiveis para {source.name}:")
+    for index, metric in enumerate(metrics, start=1):
+        print(f"{index}. {metric}")
+    print("0. Voltar")
+
+    while True:
+        option = input("Escolha uma metrica: ").strip()
+        if option == "0":
+            return None
+
+        try:
+            metric_index = int(option)
+        except ValueError:
+            print("Opcao invalida.")
+            continue
+
+        if 1 <= metric_index <= len(metrics):
+            return metrics[metric_index - 1]
+
+        print("Opcao invalida.")
+
+
+def get_controllable_sources():
+    return [source for source in get_sources() if source.controllable]
 
 
 def select_controllable_source():
@@ -254,8 +331,8 @@ def adjust_controllable_source():
 
     while True:
         print(f"\n=== Ajustar fonte controlavel: {source.name} ===")
-        print("1. Ligar fonte")
-        print("2. Desligar fonte temporariamente")
+        print("1. Ligar luz da fonte")
+        print("2. Desligar luz da fonte")
         print("3. Consultar estado")
         print("4. Ajustar luminosidade")
         print("0. Voltar")
@@ -376,10 +453,9 @@ def main_menu():
         print("\n=== Cliente Analitico ===")
         print("1. Listar fontes de dados")
         print("2. Listar todas as leituras")
-        print("3. Listar leituras por metrica")
-        print("4. Ajustar fonte controlavel")
-        print("5. Simular falha em fonte controlavel")
-        print("6. Consulta analitica agregada")
+        print("3. Ajustar fonte controlavel")
+        print("4. Simular falha em fonte controlavel")
+        print("5. Consulta")
         print("0. Sair")
 
         option = input("Escolha uma opcao: ").strip()
@@ -389,13 +465,10 @@ def main_menu():
         elif option == "2":
             list_readings()
         elif option == "3":
-            metric = input("Digite a metrica: ").strip()
-            list_readings(metric)
-        elif option == "4":
             adjust_controllable_source()
-        elif option == "5":
+        elif option == "4":
             simulate_failure()
-        elif option == "6":
+        elif option == "5":
             aggregate_query()
         elif option == "0":
             print("Cliente encerrado.")

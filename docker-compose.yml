@@ -10,21 +10,17 @@ services:
       context: ./weather-sensor
     container_name: weather-sensor
     network_mode: host
-    depends_on:
-      - gateway
 
   air-quality-sensor:
     build:
       context: ./air-quality-sensor
     container_name: air-quality-sensor
     network_mode: host
-    depends_on:
-      - gateway
+
 
   lamppost:
     build:
       context: ./lamppost
     container_name: lamppost
     network_mode: host
-    depends_on:
-      - gateway
+

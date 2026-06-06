@@ -499,7 +499,6 @@ func (x *ListSourcesResponse) GetSources() []*SourceInfo {
 
 type ListReadingsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metric        string                 `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -532,13 +531,6 @@ func (x *ListReadingsRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListReadingsRequest.ProtoReflect.Descriptor instead.
 func (*ListReadingsRequest) Descriptor() ([]byte, []int) {
 	return file_client_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ListReadingsRequest) GetMetric() string {
-	if x != nil {
-		return x.Metric
-	}
-	return ""
 }
 
 type ReadingInfo struct {
@@ -722,12 +714,14 @@ func (x *SendCommandRequest) GetLamppost() *LamppostCommand {
 }
 
 type SendCommandResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	SourceStatus  string                 `protobuf:"bytes,3,opt,name=source_status,json=sourceStatus,proto3" json:"source_status,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Success           bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message           string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	SourceStatus      string                 `protobuf:"bytes,3,opt,name=source_status,json=sourceStatus,proto3" json:"source_status,omitempty"`
+	LuminosityPercent float64                `protobuf:"fixed64,4,opt,name=luminosity_percent,json=luminosityPercent,proto3" json:"luminosity_percent,omitempty"`
+	LightOn           bool                   `protobuf:"varint,5,opt,name=light_on,json=lightOn,proto3" json:"light_on,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *SendCommandResponse) Reset() {
@@ -781,11 +775,26 @@ func (x *SendCommandResponse) GetSourceStatus() string {
 	return ""
 }
 
+func (x *SendCommandResponse) GetLuminosityPercent() float64 {
+	if x != nil {
+		return x.LuminosityPercent
+	}
+	return 0
+}
+
+func (x *SendCommandResponse) GetLightOn() bool {
+	if x != nil {
+		return x.LightOn
+	}
+	return false
+}
+
 type AggregateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metric        string                 `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
-	Operation     AggregateOperation     `protobuf:"varint,2,opt,name=operation,proto3,enum=client.AggregateOperation" json:"operation,omitempty"`
-	WindowSeconds int64                  `protobuf:"varint,3,opt,name=window_seconds,json=windowSeconds,proto3" json:"window_seconds,omitempty"`
+	SourceName    string                 `protobuf:"bytes,1,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
+	Metric        string                 `protobuf:"bytes,2,opt,name=metric,proto3" json:"metric,omitempty"`
+	Operation     AggregateOperation     `protobuf:"varint,3,opt,name=operation,proto3,enum=client.AggregateOperation" json:"operation,omitempty"`
+	WindowSeconds int64                  `protobuf:"varint,4,opt,name=window_seconds,json=windowSeconds,proto3" json:"window_seconds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -820,6 +829,13 @@ func (*AggregateRequest) Descriptor() ([]byte, []int) {
 	return file_client_proto_rawDescGZIP(), []int{10}
 }
 
+func (x *AggregateRequest) GetSourceName() string {
+	if x != nil {
+		return x.SourceName
+	}
+	return ""
+}
+
 func (x *AggregateRequest) GetMetric() string {
 	if x != nil {
 		return x.Metric
@@ -843,11 +859,13 @@ func (x *AggregateRequest) GetWindowSeconds() int64 {
 
 type AggregateResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metric        string                 `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
-	Operation     AggregateOperation     `protobuf:"varint,2,opt,name=operation,proto3,enum=client.AggregateOperation" json:"operation,omitempty"`
-	Value         float64                `protobuf:"fixed64,3,opt,name=value,proto3" json:"value,omitempty"`
-	SampleCount   int32                  `protobuf:"varint,4,opt,name=sample_count,json=sampleCount,proto3" json:"sample_count,omitempty"`
-	WindowSeconds int64                  `protobuf:"varint,5,opt,name=window_seconds,json=windowSeconds,proto3" json:"window_seconds,omitempty"`
+	SourceName    string                 `protobuf:"bytes,1,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
+	Metric        string                 `protobuf:"bytes,2,opt,name=metric,proto3" json:"metric,omitempty"`
+	Operation     AggregateOperation     `protobuf:"varint,3,opt,name=operation,proto3,enum=client.AggregateOperation" json:"operation,omitempty"`
+	Value         float64                `protobuf:"fixed64,4,opt,name=value,proto3" json:"value,omitempty"`
+	SampleCount   int32                  `protobuf:"varint,5,opt,name=sample_count,json=sampleCount,proto3" json:"sample_count,omitempty"`
+	WindowSeconds int64                  `protobuf:"varint,6,opt,name=window_seconds,json=windowSeconds,proto3" json:"window_seconds,omitempty"`
+	Unit          string                 `protobuf:"bytes,7,opt,name=unit,proto3" json:"unit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -880,6 +898,13 @@ func (x *AggregateResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use AggregateResponse.ProtoReflect.Descriptor instead.
 func (*AggregateResponse) Descriptor() ([]byte, []int) {
 	return file_client_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *AggregateResponse) GetSourceName() string {
+	if x != nil {
+		return x.SourceName
+	}
+	return ""
 }
 
 func (x *AggregateResponse) GetMetric() string {
@@ -917,6 +942,13 @@ func (x *AggregateResponse) GetWindowSeconds() int64 {
 	return 0
 }
 
+func (x *AggregateResponse) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
 var File_client_proto protoreflect.FileDescriptor
 
 const file_client_proto_rawDesc = "" +
@@ -950,9 +982,8 @@ const file_client_proto_rawDesc = "" +
 	"\vsource_type\x18\b \x01(\tR\n" +
 	"sourceType\"C\n" +
 	"\x13ListSourcesResponse\x12,\n" +
-	"\asources\x18\x01 \x03(\v2\x12.client.SourceInfoR\asources\"-\n" +
-	"\x13ListReadingsRequest\x12\x16\n" +
-	"\x06metric\x18\x01 \x01(\tR\x06metric\"\xbd\x01\n" +
+	"\asources\x18\x01 \x03(\v2\x12.client.SourceInfoR\asources\"\x15\n" +
+	"\x13ListReadingsRequest\"\xbd\x01\n" +
 	"\vReadingInfo\x12\x1f\n" +
 	"\vsource_name\x18\x01 \x01(\tR\n" +
 	"sourceName\x12\x1f\n" +
@@ -967,21 +998,28 @@ const file_client_proto_rawDesc = "" +
 	"\x12SendCommandRequest\x12\x1f\n" +
 	"\vsource_name\x18\x01 \x01(\tR\n" +
 	"sourceName\x125\n" +
-	"\blamppost\x18\x02 \x01(\v2\x19.lamppost.LamppostCommandR\blamppost\"n\n" +
+	"\blamppost\x18\x02 \x01(\v2\x19.lamppost.LamppostCommandR\blamppost\"\xb8\x01\n" +
 	"\x13SendCommandResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12#\n" +
-	"\rsource_status\x18\x03 \x01(\tR\fsourceStatus\"\x8b\x01\n" +
-	"\x10AggregateRequest\x12\x16\n" +
-	"\x06metric\x18\x01 \x01(\tR\x06metric\x128\n" +
-	"\toperation\x18\x02 \x01(\x0e2\x1a.client.AggregateOperationR\toperation\x12%\n" +
-	"\x0ewindow_seconds\x18\x03 \x01(\x03R\rwindowSeconds\"\xc5\x01\n" +
-	"\x11AggregateResponse\x12\x16\n" +
-	"\x06metric\x18\x01 \x01(\tR\x06metric\x128\n" +
-	"\toperation\x18\x02 \x01(\x0e2\x1a.client.AggregateOperationR\toperation\x12\x14\n" +
-	"\x05value\x18\x03 \x01(\x01R\x05value\x12!\n" +
-	"\fsample_count\x18\x04 \x01(\x05R\vsampleCount\x12%\n" +
-	"\x0ewindow_seconds\x18\x05 \x01(\x03R\rwindowSeconds*\x8b\x01\n" +
+	"\rsource_status\x18\x03 \x01(\tR\fsourceStatus\x12-\n" +
+	"\x12luminosity_percent\x18\x04 \x01(\x01R\x11luminosityPercent\x12\x19\n" +
+	"\blight_on\x18\x05 \x01(\bR\alightOn\"\xac\x01\n" +
+	"\x10AggregateRequest\x12\x1f\n" +
+	"\vsource_name\x18\x01 \x01(\tR\n" +
+	"sourceName\x12\x16\n" +
+	"\x06metric\x18\x02 \x01(\tR\x06metric\x128\n" +
+	"\toperation\x18\x03 \x01(\x0e2\x1a.client.AggregateOperationR\toperation\x12%\n" +
+	"\x0ewindow_seconds\x18\x04 \x01(\x03R\rwindowSeconds\"\xfa\x01\n" +
+	"\x11AggregateResponse\x12\x1f\n" +
+	"\vsource_name\x18\x01 \x01(\tR\n" +
+	"sourceName\x12\x16\n" +
+	"\x06metric\x18\x02 \x01(\tR\x06metric\x128\n" +
+	"\toperation\x18\x03 \x01(\x0e2\x1a.client.AggregateOperationR\toperation\x12\x14\n" +
+	"\x05value\x18\x04 \x01(\x01R\x05value\x12!\n" +
+	"\fsample_count\x18\x05 \x01(\x05R\vsampleCount\x12%\n" +
+	"\x0ewindow_seconds\x18\x06 \x01(\x03R\rwindowSeconds\x12\x12\n" +
+	"\x04unit\x18\a \x01(\tR\x04unit*\x8b\x01\n" +
 	"\x12AggregateOperation\x12\x1b\n" +
 	"\x17AGGREGATE_OPERATION_AVG\x10\x00\x12\x1e\n" +
 	"\x1aAGGREGATE_OPERATION_STDDEV\x10\x01\x12\x1b\n" +
