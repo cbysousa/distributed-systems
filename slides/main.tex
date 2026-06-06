@@ -1,0 +1,410 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{lmodern}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\usetikzlibrary{positioning}
+
+\definecolor{codegray}{RGB}{245,245,245}
+\definecolor{codeblue}{RGB}{35,88,140}
+
+\lstdefinestyle{proto}{
+  basicstyle=\ttfamily\scriptsize,
+  backgroundcolor=\color{codegray},
+  keywordstyle=\color{codeblue}\bfseries,
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  breaklines=true
+}
+
+\title[Sistema Distribuido de Cidade Inteligente]{Sistema Distribuido de Cidade Inteligente}
+\subtitle{Detalhes de Implementacao, Mensagens e Tecnologias}
+\author{Distribuicao de Dados}
+\institute{Universidade Federal do Ceara}
+\date{2026.1}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Objetivo do Sistema}
+  \begin{itemize}
+    \item Implementar um sistema distribuido para coleta, controle e consulta de dados urbanos.
+    \item Integrar tres fontes de dados: clima, qualidade do ar e poste inteligente.
+    \item Centralizar descoberta, leituras, controle e consultas em um Gateway.
+    \item Usar mensagens padronizadas com Protocol Buffers entre os processos.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Partes do Trabalho}
+  \begin{enumerate}
+    \item Descoberta dinamica das fontes de dados pelo Gateway.
+    \item Recebimento e armazenamento de leituras das fontes.
+    \item Cliente analitico para listagem, controle e consultas agregadas.
+  \end{enumerate}
+
+  \vspace{0.4cm}
+  \begin{block}{Foco da implementacao}
+    Formato das mensagens, comunicacao entre processos, linguagens, bibliotecas e protocolos usados.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Arquitetura Geral}
+  \centering
+  \begin{tikzpicture}[node distance=1.4cm, every node/.style={font=\small, align=center}]
+    \node[draw, rounded corners, fill=blue!10, minimum width=2.8cm, minimum height=1cm] (gateway) {Gateway\\Go};
+    \node[draw, rounded corners, fill=green!10, above left=1.1cm and 2.2cm of gateway, minimum width=2.8cm] (weather) {weather-sensor\\Python};
+    \node[draw, rounded corners, fill=green!10, left=2.7cm of gateway, minimum width=2.8cm] (air) {air-quality-sensor\\Python};
+    \node[draw, rounded corners, fill=green!10, below left=1.1cm and 2.2cm of gateway, minimum width=2.8cm] (lamp) {lamppost\\Python};
+    \node[draw, rounded corners, fill=orange!12, right=2.8cm of gateway, minimum width=2.8cm] (client) {Cliente analitico\\Python};
+
+    \draw[->, thick] (gateway) -- node[above, sloped] {UDP multicast discovery} (weather);
+    \draw[->, thick] (gateway) -- node[above] {UDP multicast discovery} (air);
+    \draw[->, thick] (gateway) -- node[below, sloped] {UDP multicast discovery} (lamp);
+
+    \draw[->, dashed, thick] (weather) -- node[below, sloped] {UDP readings} (gateway);
+    \draw[->, dashed, thick] (air) -- node[below] {UDP readings} (gateway);
+    \draw[->, dashed, thick] (lamp) -- node[below, sloped] {UDP readings} (gateway);
+
+    \draw[<->, thick] (gateway) -- node[above] {TCP} (client);
+    \draw[<->, thick, bend right=25] (gateway) to node[below] {TCP controle} (lamp);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Processos e Portas}
+  \begin{table}
+    \centering
+    \begin{tabular}{lll}
+      \toprule
+      Processo & Linguagem & Papel \\
+      \midrule
+      Gateway & Go & Descoberta e registro de informações dos sensores \\
+      weather-sensor & Python & Sensor de Temperatura e umidade \\
+      air-quality-sensor & Python & Sensor de CO2, particulados e indice de ar \\
+      lamppost & Python & Enviar dados de luminosidade e gasto de energia\\
+      Cliente & Python & Interface analitica interativa \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+
+  \vspace{0.2cm}
+  \begin{itemize}
+    \item Discovery UDP multicast: \texttt{239.0.0.1:9999}
+    \item Servidor UDP (Gateway): \texttt{11000}
+    \item Servidor TCP (Gateway): \texttt{12000}
+    \item Servidor de Controle TCP (Lamppost): \texttt{10002}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Parte 1: Descoberta de Fontes}
+  \begin{itemize}
+    \item O Gateway envia uma requisicao UDP multicast para o grupo de descoberta.
+    \item Cada fonte responde por UDP usando \texttt{DiscoveryResponse} serializado com Protobuf.
+    \item A resposta informa nome, tipo, endereco de controle e status operacional.
+    \item O Gateway registra as fontes em um estado central protegido por \texttt{sync.RWMutex}.
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Formato das Mensagens de Descoberta}
+\begin{lstlisting}[style=proto]
+message DiscoveryRequest {
+  string gateway_id = 1;
+  string gateway_ip = 2;
+  int32 readings_port = 3;
+  int32 client_port = 4;
+}
+
+message DiscoveryResponse {
+  string source_name = 1;
+  string source_type = 2;
+  string ip = 3;
+  int32 control_port = 4;
+  bool controllable = 5;
+  string status = 6;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Parte 2: Envio de Leituras}
+  \begin{itemize}
+    \item As fontes enviam leituras periodicas ao Gateway por UDP.
+    \item Cada pacote contem o nome da fonte, timestamp e uma leitura tipada.
+    \item O campo \texttt{oneof} permite reaproveitar o mesmo envelope para diferentes sensores.
+    \item O Gateway converte as leituras recebidas em metricas internas com valor, unidade e timestamp.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Envelope de Leituras}
+\begin{lstlisting}[style=proto]
+message ReadingPacket {
+  string source_name = 1;
+  int64 timestamp_unix_ms = 2;
+
+  oneof reading {
+    temperature.TemperatureReading temperature = 3;
+    airquality.AirQualityReading air_quality = 4;
+    lamppost.LamppostReading lamppost = 5;
+  }
+}
+\end{lstlisting}
+
+  \begin{block}{Vantagem do \texttt{oneof}}
+    O Gateway recebe um unico tipo de pacote, mas preserva o formato especifico de cada fonte.
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Formatos de Leituras por Fonte}
+\begin{lstlisting}[style=proto]
+message TemperatureReading {
+  double temperature_celsius = 1;
+  double humidity_percent = 2;
+}
+
+message AirQualityReading {
+  double co2_ppm = 1;
+  double particulate_matter_ug_m3 = 2;
+  double air_quality_index = 3;
+}
+
+message LamppostReading {
+  double luminosity_percent = 1;
+  double energy_consumption_kwh = 2;
+  bool light_on = 3;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Metricas Armazenadas pelo Gateway}
+  \begin{table}
+    \centering
+    \begin{tabular}{lll}
+      \toprule
+      Fonte & Metrica & Unidade \\
+      \midrule
+      weather & \texttt{temperature\_celsius} & celsius \\
+      weather & \texttt{humidity\_percent} & percent \\
+      air\_quality & \texttt{co2\_ppm} & ppm \\
+      air\_quality & \texttt{particulate\_matter\_ug\_m3} & ug/m3 \\
+      air\_quality & \texttt{air\_quality\_index} & aqi \\
+      lamppost & \texttt{luminosity\_percent} & percent \\
+      lamppost & \texttt{energy\_consumption\_kwh} & kWh \\
+      lamppost & \texttt{light\_on} & boolean \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Parte 3: Cliente Analitico}
+  \begin{itemize}
+    \item Cliente interativo implementado em Python.
+    \item Conecta ao Gateway por TCP na porta \texttt{12000}.
+    \item Usa mensagens Protobuf em \texttt{ClientRequest} e \texttt{ClientResponse}.
+    \item Permite listar fontes, listar leituras, controlar o lamppost e executar consultas agregadas.
+  \end{itemize}
+
+  \begin{block}{Framing TCP}
+    Cada mensagem TCP usa 4 bytes iniciais com o tamanho do payload, seguidos pelos bytes Protobuf.
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Mensagens Cliente-Gateway}
+\begin{lstlisting}[style=proto]
+message ClientRequest {
+  oneof request {
+    ListSourcesRequest list_sources = 1;
+    ListReadingsRequest list_readings = 2;
+    SendCommandRequest send_command = 3;
+    AggregateRequest aggregate = 4;
+  }
+}
+
+message ClientResponse {
+  bool success = 1;
+  string message = 2;
+
+  oneof response {
+    ListSourcesResponse list_sources = 3;
+    ListReadingsResponse list_readings = 4;
+    SendCommandResponse send_command = 5;
+    AggregateResponse aggregate = 6;
+  }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Listagem de Fontes e Leituras}
+\begin{lstlisting}[style=proto]
+message SourceInfo {
+  string name = 1;
+  string address = 2;
+  string ip = 3;
+  int32 port = 4;
+  bool controllable = 5;
+  string status = 6;
+  int64 last_seen_unix_ms = 7;
+  string source_type = 8;
+}
+
+message ReadingInfo {
+  string source_name = 1;
+  string source_type = 2;
+  string metric = 3;
+  double value = 4;
+  string unit = 5;
+  int64 timestamp_unix_ms = 6;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Controle do Lamppost}
+  \begin{itemize}
+    \item O \texttt{lamppost} é a unica fonte controlavel.
+    \item O Gateway envia comandos por TCP para a porta \texttt{10002}.
+    \item A fonte responde com status operacional, luminosidade, consumo e estado da luz.
+    \item A fonte tem como atributos configuraveis a luminosidade e o estado da luz (ligado e desligado)
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Mensagens de Controle do Lamppost}
+\begin{lstlisting}[style=proto]
+message LamppostCommand {
+  oneof command {
+    LamppostTurnOnRequest turn_on = 1;
+    LamppostTurnOffRequest turn_off = 2;
+    LamppostGetStateRequest get_state = 3;
+    LamppostSimulateFailureRequest simulate_failure = 4;
+    LamppostSetLuminosityRequest set_luminosity = 5;
+  }
+}
+
+message LamppostResponse {
+  bool success = 1;
+  string message = 2;
+  bool active = 3;
+  string status = 4;
+  double luminosity_percent = 5;
+  double energy_consumption_kwh = 6;
+  bool light_on = 7;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Retorno de Comandos ao Cliente}
+\begin{lstlisting}[style=proto]
+message SendCommandResponse {
+  bool success = 1;
+  string message = 2;
+  string source_status = 3;
+  double luminosity_percent = 4;
+  bool light_on = 5;
+}
+\end{lstlisting}
+
+  \begin{itemize}
+    \item O cliente exibe luminosidade e estado da luz apenas quando o comando tem sucesso.
+    \item Em caso de falha local ou erro TCP, a resposta mostra apenas resultado, mensagem e status.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Consultas Agregadas}
+  \begin{itemize}
+    \item As consultas sao feitas por fonte, metrica, operacao e janela temporal.
+    \item Operacoes suportadas: \texttt{AVG (Média)}, \texttt{STDDEV (Desvio Padrão)}, \texttt{MIN (Mínimo)} e \texttt{MAX (Máximo)}.
+    \item O Gateway filtra leituras por \texttt{source\_name (Nome da fonte)}, \texttt{metric (Métrica)} e \texttt{window\_seconds (Intervalo de tempo em segundos)}.
+    \item A resposta inclui valor, unidade, quantidade de amostras e janela usada.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Formato das Consultas}
+\begin{lstlisting}[style=proto,basicstyle=\ttfamily\tiny]
+enum AggregateOperation {
+  AGGREGATE_OPERATION_AVG = 0;
+  AGGREGATE_OPERATION_STDDEV = 1;
+  AGGREGATE_OPERATION_MIN = 2;
+  AGGREGATE_OPERATION_MAX = 3;
+}
+
+message AggregateRequest {
+  string source_name = 1;
+  string metric = 2;
+  AggregateOperation operation = 3;
+  int64 window_seconds = 4;
+}
+
+message AggregateResponse {
+  string source_name = 1;
+  string metric = 2;
+  AggregateOperation operation = 3;
+  double value = 4;
+  int32 sample_count = 5;
+  int64 window_seconds = 6;
+  string unit = 7;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Simulacao de Falhas}
+  \small
+  \begin{itemize}
+    \item O comando \texttt{simulate\_failure} é enviado ao \texttt{lamppost}.
+    \item A fonte responde ao comando e entra em falha temporaria por 15 segundos.
+    \item Durante a falha, o \texttt{lamppost} nao responde discovery, nao envia leituras e nao responde mensagens TCP.
+    \item O Gateway marca como offline na próxima tentativa de descoberta, quando a fonte não responde.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Tecnologias Utilizadas}
+  \begin{table}
+    \centering
+    \begin{tabular}{ll}
+      \toprule
+      Tecnologia & Uso \\
+      \midrule
+      Go & Gateway \\
+      Python & Fontes de dados e cliente interativo \\
+      Protocol Buffers & Contratos e serializacao das mensagens \\
+      UDP multicast & Descoberta de fontes \\
+      UDP unicast & Envio de leituras ao Gateway \\
+      TCP & Cliente-Gateway e controle do lamppost \\
+      Docker & Execucao dos processos principais \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Organizacao do Codigo}
+  \begin{itemize}
+    \item \texttt{contracts/}: arquivos \texttt{.proto} compartilhados.
+    \item \texttt{gateway/}: descoberta, estado, leituras, cliente TCP, analytics e controle.
+    \item \texttt{weather-sensor/}: fonte de temperatura e umidade.
+    \item \texttt{air-quality-sensor/}: fonte de qualidade do ar.
+    \item \texttt{lamppost/}: Poste de luz, fonte controlavel.
+    \item \texttt{client/}: cliente analitico interativo.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusao}
+  \begin{itemize}
+    \item O sistema integra processos independentes com comunicacao UDP e TCP.
+    \item Protocol Buffers padroniza as mensagens entre Go e Python.
+    \item O Gateway centraliza estado, leituras, controle e consultas agregadas.
+    \item A fonte controlavel permite demonstrar comandos, estado operacional e falhas temporarias.
+  \end{itemize}
+\end{frame}
+
+\end{document}
