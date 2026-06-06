@@ -20,7 +20,7 @@ func main() {
 	gatewayState.AddDiscoveredSources(sources)
 
 	for _, source := range gatewayState.ListSources() {
-		fmt.Println(source.Address, source.Name, source.Controllable, source.Status)
+		fmt.Println(source.Address, source.Name, source.Type, source.Controllable, source.Status)
 	}
 
 	go func() {

@@ -7,10 +7,14 @@ import (
 	"github.com/cbysousa/distributed-systems/internal/discovery"
 )
 
-const StatusDiscovered = "DISCOVERED"
+const (
+	StatusDiscovered = "DISCOVERED"
+	StatusOffline    = "OFFLINE"
+)
 
 type Source struct {
 	Name         string
+	Type         string
 	Address      string
 	IP           string
 	Port         int
@@ -50,11 +54,12 @@ func (s *GatewayState) AddDiscoveredSources(sources []discovery.Source) {
 func (s *GatewayState) AddDiscoveredSource(source discovery.Source) {
 	s.AddSource(Source{
 		Name:         source.Name,
+		Type:         source.Type,
 		Address:      source.Address,
 		IP:           source.IP,
 		Port:         source.Port,
 		Controllable: source.Controllable,
-		Status:       StatusDiscovered,
+		Status:       source.Status,
 		LastSeen:     time.Now(),
 	})
 }

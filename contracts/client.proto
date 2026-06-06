@@ -37,6 +37,7 @@ message SourceInfo {
   bool controllable = 5;
   string status = 6;
   int64 last_seen_unix_ms = 7;
+  string source_type = 8;
 }
 
 message ListSourcesResponse {

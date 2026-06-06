@@ -3,6 +3,7 @@ package sourcecontrol
 import (
 	"fmt"
 	"net"
+	"time"
 
 	smartpb "github.com/cbysousa/distributed-systems/internal/proto"
 	"github.com/cbysousa/distributed-systems/internal/state"
@@ -27,11 +28,21 @@ func SendCommand(source state.Source, request *smartpb.SendCommandRequest) (Resu
 		return Result{}, fmt.Errorf("missing source command")
 	}
 
-	conn, err := net.Dial("tcp", source.Address)
+	cfg := DefaultConfig()
+	conn, err := net.DialTimeout(
+		"tcp",
+		source.Address,
+		time.Duration(cfg.ConnectTimeoutSeconds)*time.Second,
+	)
 	if err != nil {
 		return Result{}, err
 	}
 	defer conn.Close()
+
+	deadline := time.Now().Add(time.Duration(cfg.RequestTimeoutSeconds) * time.Second)
+	if err := conn.SetDeadline(deadline); err != nil {
+		return Result{}, err
+	}
 
 	switch command := request.Command.(type) {
 	case *smartpb.SendCommandRequest_Cam:
