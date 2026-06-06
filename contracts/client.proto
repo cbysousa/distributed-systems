@@ -11,6 +11,7 @@ message ClientRequest {
     ListSourcesRequest list_sources = 1;
     ListReadingsRequest list_readings = 2;
     SendCommandRequest send_command = 3;
+    AggregateRequest aggregate = 4;
   }
 }
 
@@ -22,7 +23,15 @@ message ClientResponse {
     ListSourcesResponse list_sources = 3;
     ListReadingsResponse list_readings = 4;
     SendCommandResponse send_command = 5;
+    AggregateResponse aggregate = 6;
   }
+}
+
+enum AggregateOperation {
+  AGGREGATE_OPERATION_AVG = 0;
+  AGGREGATE_OPERATION_STDDEV = 1;
+  AGGREGATE_OPERATION_MIN = 2;
+  AGGREGATE_OPERATION_MAX = 3;
 }
 
 message ListSourcesRequest {}
@@ -68,4 +77,18 @@ message SendCommandResponse {
   bool success = 1;
   string message = 2;
   string source_status = 3;
+}
+
+message AggregateRequest {
+  string metric = 1;
+  AggregateOperation operation = 2;
+  int64 window_seconds = 3;
+}
+
+message AggregateResponse {
+  string metric = 1;
+  AggregateOperation operation = 2;
+  double value = 3;
+  int32 sample_count = 4;
+  int64 window_seconds = 5;
 }

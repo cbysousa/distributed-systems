@@ -1,6 +1,9 @@
 package clientserver
 
 import (
+	"fmt"
+
+	"github.com/cbysousa/distributed-systems/internal/analytics"
 	smartpb "github.com/cbysousa/distributed-systems/internal/proto"
 	"github.com/cbysousa/distributed-systems/internal/sourcecontrol"
 	"github.com/cbysousa/distributed-systems/internal/state"
@@ -14,6 +17,8 @@ func handleRequest(request *smartpb.ClientRequest, gatewayState *state.GatewaySt
 		return handleListReadings(req.ListReadings, gatewayState)
 	case *smartpb.ClientRequest_SendCommand:
 		return handleSendCommand(req.SendCommand, gatewayState)
+	case *smartpb.ClientRequest_Aggregate:
+		return handleAggregate(req.Aggregate, gatewayState)
 	default:
 		return errorResponse("unknown request")
 	}
@@ -107,5 +112,62 @@ func sendCommandResponse(success bool, message string, sourceStatus string) *sma
 				SourceStatus: sourceStatus,
 			},
 		},
+	}
+}
+
+func handleAggregate(request *smartpb.AggregateRequest, gatewayState *state.GatewayState) *smartpb.ClientResponse {
+	if request == nil {
+		return errorResponse("missing aggregate request")
+	}
+
+	if request.Metric == "" {
+		return errorResponse("missing aggregate metric")
+	}
+
+	if request.WindowSeconds < 0 {
+		return errorResponse("aggregate window cannot be negative")
+	}
+
+	operation, err := aggregateOperationFromProto(request.Operation)
+	if err != nil {
+		return errorResponse(err.Error())
+	}
+
+	result, err := analytics.Run(gatewayState.ListReadings(), analytics.Query{
+		Metric:        request.Metric,
+		Operation:     operation,
+		WindowSeconds: request.WindowSeconds,
+	})
+	if err != nil {
+		return errorResponse(err.Error())
+	}
+
+	return &smartpb.ClientResponse{
+		Success: true,
+		Message: "aggregate query executed successfully",
+		Response: &smartpb.ClientResponse_Aggregate{
+			Aggregate: &smartpb.AggregateResponse{
+				Metric:        result.Metric,
+				Operation:     request.Operation,
+				Value:         result.Value,
+				SampleCount:   int32(result.SampleCount),
+				WindowSeconds: result.WindowSeconds,
+			},
+		},
+	}
+}
+
+func aggregateOperationFromProto(operation smartpb.AggregateOperation) (analytics.Operation, error) {
+	switch operation {
+	case smartpb.AggregateOperation_AGGREGATE_OPERATION_AVG:
+		return analytics.OperationAVG, nil
+	case smartpb.AggregateOperation_AGGREGATE_OPERATION_STDDEV:
+		return analytics.OperationSTDDEV, nil
+	case smartpb.AggregateOperation_AGGREGATE_OPERATION_MIN:
+		return analytics.OperationMIN, nil
+	case smartpb.AggregateOperation_AGGREGATE_OPERATION_MAX:
+		return analytics.OperationMAX, nil
+	default:
+		return "", fmt.Errorf("unknown aggregate operation")
 	}
 }
