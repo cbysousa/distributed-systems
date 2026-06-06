@@ -4,15 +4,15 @@ import struct
 import threading
 import time
 
+import air_quality_pb2
 import discovery_pb2
 import readings_pb2
-import temperature_pb2
 
 
 MULTICAST_GROUP = "239.0.0.1"
 DISCOVERY_PORT = 9999
-NAME = "weather-sensor"
-SOURCE_TYPE = "weather"
+NAME = "air-quality-sensor"
+SOURCE_TYPE = "air_quality"
 STATUS_ACTIVE = "ACTIVE"
 
 gateway_ip = None
@@ -67,19 +67,21 @@ def listen_multicast():
 
 
 def build_reading_packet():
-    current_temp = round(random.uniform(20.0, 35.0), 1)
-    current_humidity = round(random.uniform(35.0, 85.0), 1)
+    co2_ppm = round(random.uniform(350.0, 1200.0), 1)
+    particulate_matter = round(random.uniform(5.0, 80.0), 1)
+    air_quality_index = round(random.uniform(0.0, 200.0), 1)
 
     packet = readings_pb2.ReadingPacket(
         source_name=NAME,
         timestamp_unix_ms=int(time.time() * 1000),
-        temperature=temperature_pb2.TemperatureReading(
-            temperature_celsius=current_temp,
-            humidity_percent=current_humidity,
+        air_quality=air_quality_pb2.AirQualityReading(
+            co2_ppm=co2_ppm,
+            particulate_matter_ug_m3=particulate_matter,
+            air_quality_index=air_quality_index,
         ),
     )
 
-    return packet, current_temp, current_humidity
+    return packet, co2_ppm, particulate_matter, air_quality_index
 
 
 def send_continuous_data():
@@ -87,7 +89,7 @@ def send_continuous_data():
 
     while True:
         if gateway_ip and gateway_readings_port:
-            packet, current_temp, current_humidity = build_reading_packet()
+            packet, co2_ppm, particulate_matter, air_quality_index = build_reading_packet()
 
             try:
                 sock.sendto(
@@ -95,8 +97,8 @@ def send_continuous_data():
                     (gateway_ip, gateway_readings_port),
                 )
                 print(
-                    f"[{NAME}] sent temperature={current_temp}C "
-                    f"humidity={current_humidity}%"
+                    f"[{NAME}] sent co2={co2_ppm}ppm "
+                    f"pm={particulate_matter}ug/m3 aqi={air_quality_index}"
                 )
             except Exception as error:
                 print(f"[{NAME}] failed to send reading: {error}")

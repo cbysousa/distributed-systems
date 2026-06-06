@@ -70,8 +70,8 @@ func errorResponse(message string) *smartpb.ClientResponse {
 }
 
 func handleSendCommand(request *smartpb.SendCommandRequest, gatewayState *state.GatewayState) *smartpb.ClientResponse {
-	if request == nil || request.Command == nil {
-		return sendCommandResponse(false, "missing source command", "")
+	if request == nil || request.Lamppost == nil || request.Lamppost.Command == nil {
+		return sendCommandResponse(false, "missing lamppost command", "")
 	}
 
 	source, exists := gatewayState.GetSource(request.SourceName)

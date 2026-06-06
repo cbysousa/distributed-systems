@@ -1,32 +1,30 @@
 services:
-  cam:
+  gateway:
     build:
-      context: ./cam
-    container_name: cam-listener
+      context: ./gateway
+    container_name: gateway
     network_mode: host
 
-  lamppost:
-    build:
-      context: ./lamppost
-    container_name: lamppost-listener
-    network_mode: host
-
-  semaphore:
-    build:
-      context: ./semaphore
-    container_name: semaphore-listener
-    network_mode: host
-
-  weather_station:
+  weather-sensor:
     build:
       context: ./weather-sensor
     container_name: weather-sensor
     network_mode: host
-    
-  client:
+    depends_on:
+      - gateway
+
+  air-quality-sensor:
     build:
-      context: ./client
-    container_name: analytical-client
+      context: ./air-quality-sensor
+    container_name: air-quality-sensor
     network_mode: host
-    stdin_open: true
-    tty: true
+    depends_on:
+      - gateway
+
+  lamppost:
+    build:
+      context: ./lamppost
+    container_name: lamppost
+    network_mode: host
+    depends_on:
+      - gateway

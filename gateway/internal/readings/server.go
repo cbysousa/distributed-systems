@@ -42,6 +42,7 @@ func StartUDPServer(cfg Config, gatewayState *state.GatewayState) error {
 
 		gatewayState.AddReadings(readings)
 		gatewayState.UpdateLastSeen(packet.SourceName)
+		gatewayState.UpdateStatus(packet.SourceName, state.StatusActive)
 
 		fmt.Printf("received %d readings from %s\n", len(readings), packet.SourceName)
 	}

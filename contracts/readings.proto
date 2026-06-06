@@ -4,6 +4,7 @@ package readings;
 
 import "temperature.proto";
 import "air_quality.proto";
+import "lamppost.proto";
 
 option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
 
@@ -14,5 +15,6 @@ message ReadingPacket {
   oneof reading {
     temperature.TemperatureReading temperature = 3;
     airquality.AirQualityReading air_quality = 4;
+    lamppost.LamppostReading lamppost = 5;
   }
 }

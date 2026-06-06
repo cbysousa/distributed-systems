@@ -1,6 +1,7 @@
 package state
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -8,9 +9,17 @@ import (
 )
 
 const (
-	StatusDiscovered = "DISCOVERED"
-	StatusOffline    = "OFFLINE"
+	StatusActive  = "ACTIVE"
+	StatusOffline = "OFFLINE"
 )
+
+func NormalizeStatus(status string) string {
+	if strings.ToUpper(status) == StatusOffline {
+		return StatusOffline
+	}
+
+	return StatusActive
+}
 
 type Source struct {
 	Name         string
@@ -68,9 +77,7 @@ func (s *GatewayState) AddSource(source Source) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if source.Status == "" {
-		source.Status = StatusDiscovered
-	}
+	source.Status = NormalizeStatus(source.Status)
 
 	if source.LastSeen.IsZero() {
 		source.LastSeen = time.Now()
@@ -108,7 +115,7 @@ func (s *GatewayState) UpdateStatus(name string, status string) bool {
 		return false
 	}
 
-	source.Status = status
+	source.Status = NormalizeStatus(status)
 	s.sources[name] = source
 	return true
 }
