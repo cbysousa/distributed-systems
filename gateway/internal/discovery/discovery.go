@@ -4,18 +4,20 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 	"time"
-)
 
-const discoveryMessage = "DISCOVER"
+	smartpb "github.com/cbysousa/distributed-systems/internal/proto"
+	"google.golang.org/protobuf/proto"
+)
 
 type Source struct {
 	Name         string
+	Type         string
 	Address      string
 	IP           string
 	Port         int
 	Controllable bool
+	Status       string
 }
 
 func Discover(cfg Config) ([]Source, error) {
@@ -33,7 +35,19 @@ func Discover(cfg Config) ([]Source, error) {
 	}
 	defer conn.Close()
 
-	_, err = conn.WriteToUDP([]byte(discoveryMessage), multicastAddr)
+	request := &smartpb.DiscoveryRequest{
+		GatewayId:    cfg.GatewayID,
+		GatewayIp:    cfg.GatewayIP,
+		ReadingsPort: int32(cfg.ReadingsPort),
+		ClientPort:   int32(cfg.ClientPort),
+	}
+
+	data, err := proto.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = conn.WriteToUDP(data, multicastAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -50,12 +64,11 @@ func Discover(cfg Config) ([]Source, error) {
 	for {
 		select {
 		case source := <-foundSources:
-			key := source.Name + "@" + source.Address
-			if seenSources[key] {
+			if seenSources[source.Name] {
 				continue
 			}
 
-			seenSources[key] = true
+			seenSources[source.Name] = true
 			sources = append(sources, source)
 		case <-timeout:
 			close(done)
@@ -73,7 +86,7 @@ func listenForResponses(conn *net.UDPConn, bufferSize int, foundSources chan<- S
 			return
 		}
 
-		source, err := parseSourceResponse(string(buffer[:n]), remoteAddr)
+		source, err := parseSourceResponse(buffer[:n], remoteAddr)
 		if err != nil {
 			continue
 		}
@@ -86,24 +99,34 @@ func listenForResponses(conn *net.UDPConn, bufferSize int, foundSources chan<- S
 	}
 }
 
-func parseSourceResponse(response string, remoteAddr *net.UDPAddr) (Source, error) {
-	parts := strings.Split(strings.TrimSpace(response), "|")
-	if len(parts) != 3 {
-		return Source{}, fmt.Errorf("invalid discovery response: %s", response)
-	}
-
-	port, err := strconv.Atoi(parts[2])
-	if err != nil {
+func parseSourceResponse(data []byte, remoteAddr *net.UDPAddr) (Source, error) {
+	response := &smartpb.DiscoveryResponse{}
+	if err := proto.Unmarshal(data, response); err != nil {
 		return Source{}, err
 	}
 
-	ip := remoteAddr.IP.String()
+	if response.SourceName == "" {
+		return Source{}, fmt.Errorf("discovery response missing source name")
+	}
+
+	ip := response.Ip
+	if ip == "" {
+		ip = remoteAddr.IP.String()
+	}
+
+	port := int(response.ControlPort)
+	address := ""
+	if port > 0 {
+		address = net.JoinHostPort(ip, strconv.Itoa(port))
+	}
 
 	return Source{
-		Name:         parts[0],
-		Address:      net.JoinHostPort(ip, strconv.Itoa(port)),
+		Name:         response.SourceName,
+		Type:         response.SourceType,
+		Address:      address,
 		IP:           ip,
 		Port:         port,
-		Controllable: parts[1] == "1",
+		Controllable: response.Controllable,
+		Status:       response.Status,
 	}, nil
 }

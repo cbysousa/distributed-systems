@@ -8,6 +8,7 @@ import (
 func sourceToProto(source state.Source) *smartpb.SourceInfo {
 	return &smartpb.SourceInfo{
 		Name:           source.Name,
+		SourceType:     source.Type,
 		Address:        source.Address,
 		Ip:             source.IP,
 		Port:           int32(source.Port),

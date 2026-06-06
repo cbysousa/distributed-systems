@@ -5,6 +5,10 @@ type Config struct {
 	DiscoveryPort    int
 	TimeoutSeconds   int
 	BufferSize       int
+	GatewayID        string
+	GatewayIP        string
+	ReadingsPort     int
+	ClientPort       int
 }
 
 func DefaultConfig() Config {
@@ -13,5 +17,9 @@ func DefaultConfig() Config {
 		DiscoveryPort:    9999,
 		TimeoutSeconds:   3,
 		BufferSize:       1024,
+		GatewayID:        "gateway-1",
+		GatewayIP:        "",
+		ReadingsPort:     11000,
+		ClientPort:       12000,
 	}
 }

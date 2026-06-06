@@ -85,7 +85,8 @@ func handleSendCommand(request *smartpb.SendCommandRequest, gatewayState *state.
 
 	result, err := sourcecontrol.SendCommand(source, request)
 	if err != nil {
-		return sendCommandResponse(false, err.Error(), source.Status)
+		gatewayState.UpdateStatus(source.Name, state.StatusOffline)
+		return sendCommandResponse(false, err.Error(), state.StatusOffline)
 	}
 
 	if result.Status != "" {
