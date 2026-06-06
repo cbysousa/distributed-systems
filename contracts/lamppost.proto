@@ -1,7 +1,7 @@
 syntax = "proto3";
-<<<<<<< HEAD
 
-option go_package = "./pb";
+package lamppost;
+
 option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
 
 message LamppostCommand {
@@ -10,6 +10,7 @@ message LamppostCommand {
     LamppostTurnOffRequest turn_off = 2;
     LamppostGetStateRequest get_state = 3;
     LamppostSimulateFailureRequest simulate_failure = 4;
+    LamppostSetLuminosityRequest set_luminosity = 5;
   }
 }
 
@@ -21,9 +22,20 @@ message LamppostGetStateRequest {}
 
 message LamppostSimulateFailureRequest {}
 
+message LamppostSetLuminosityRequest {
+  double luminosity_percent = 1;
+}
+
 message LamppostResponse {
   bool success = 1;
   string message = 2;
   bool active = 3;
   string status = 4;
+  double luminosity_percent = 5;
+  double energy_consumption_kwh = 6;
+}
+
+message LamppostReading {
+  double luminosity_percent = 1;
+  double energy_consumption_kwh = 2;
 }

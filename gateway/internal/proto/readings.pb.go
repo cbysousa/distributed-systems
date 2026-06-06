@@ -29,6 +29,7 @@ type ReadingPacket struct {
 	//
 	//	*ReadingPacket_Temperature
 	//	*ReadingPacket_AirQuality
+	//	*ReadingPacket_Lamppost
 	Reading       isReadingPacket_Reading `protobuf_oneof:"reading"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -103,6 +104,15 @@ func (x *ReadingPacket) GetAirQuality() *AirQualityReading {
 	return nil
 }
 
+func (x *ReadingPacket) GetLamppost() *LamppostReading {
+	if x != nil {
+		if x, ok := x.Reading.(*ReadingPacket_Lamppost); ok {
+			return x.Lamppost
+		}
+	}
+	return nil
+}
+
 type isReadingPacket_Reading interface {
 	isReadingPacket_Reading()
 }
@@ -115,22 +125,29 @@ type ReadingPacket_AirQuality struct {
 	AirQuality *AirQualityReading `protobuf:"bytes,4,opt,name=air_quality,json=airQuality,proto3,oneof"`
 }
 
+type ReadingPacket_Lamppost struct {
+	Lamppost *LamppostReading `protobuf:"bytes,5,opt,name=lamppost,proto3,oneof"`
+}
+
 func (*ReadingPacket_Temperature) isReadingPacket_Reading() {}
 
 func (*ReadingPacket_AirQuality) isReadingPacket_Reading() {}
+
+func (*ReadingPacket_Lamppost) isReadingPacket_Reading() {}
 
 var File_readings_proto protoreflect.FileDescriptor
 
 const file_readings_proto_rawDesc = "" +
 	"\n" +
-	"\x0ereadings.proto\x12\breadings\x1a\x11temperature.proto\x1a\x11air_quality.proto\"\xee\x01\n" +
+	"\x0ereadings.proto\x12\breadings\x1a\x11temperature.proto\x1a\x11air_quality.proto\x1a\x0elamppost.proto\"\xa7\x02\n" +
 	"\rReadingPacket\x12\x1f\n" +
 	"\vsource_name\x18\x01 \x01(\tR\n" +
 	"sourceName\x12*\n" +
 	"\x11timestamp_unix_ms\x18\x02 \x01(\x03R\x0ftimestampUnixMs\x12C\n" +
 	"\vtemperature\x18\x03 \x01(\v2\x1f.temperature.TemperatureReadingH\x00R\vtemperature\x12@\n" +
 	"\vair_quality\x18\x04 \x01(\v2\x1d.airquality.AirQualityReadingH\x00R\n" +
-	"airQualityB\t\n" +
+	"airQuality\x127\n" +
+	"\blamppost\x18\x05 \x01(\v2\x19.lamppost.LamppostReadingH\x00R\blamppostB\t\n" +
 	"\areadingB>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3"
 
 var (
@@ -150,15 +167,17 @@ var file_readings_proto_goTypes = []any{
 	(*ReadingPacket)(nil),      // 0: readings.ReadingPacket
 	(*TemperatureReading)(nil), // 1: temperature.TemperatureReading
 	(*AirQualityReading)(nil),  // 2: airquality.AirQualityReading
+	(*LamppostReading)(nil),    // 3: lamppost.LamppostReading
 }
 var file_readings_proto_depIdxs = []int32{
 	1, // 0: readings.ReadingPacket.temperature:type_name -> temperature.TemperatureReading
 	2, // 1: readings.ReadingPacket.air_quality:type_name -> airquality.AirQualityReading
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 2: readings.ReadingPacket.lamppost:type_name -> lamppost.LamppostReading
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_readings_proto_init() }
@@ -168,9 +187,11 @@ func file_readings_proto_init() {
 	}
 	file_temperature_proto_init()
 	file_air_quality_proto_init()
+	file_lamppost_proto_init()
 	file_readings_proto_msgTypes[0].OneofWrappers = []any{
 		(*ReadingPacket_Temperature)(nil),
 		(*ReadingPacket_AirQuality)(nil),
+		(*ReadingPacket_Lamppost)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

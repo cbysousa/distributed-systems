@@ -278,6 +278,7 @@ type SourceInfo struct {
 	Controllable   bool                   `protobuf:"varint,5,opt,name=controllable,proto3" json:"controllable,omitempty"`
 	Status         string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
 	LastSeenUnixMs int64                  `protobuf:"varint,7,opt,name=last_seen_unix_ms,json=lastSeenUnixMs,proto3" json:"last_seen_unix_ms,omitempty"`
+	SourceType     string                 `protobuf:"bytes,8,opt,name=source_type,json=sourceType,proto3" json:"source_type,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -359,6 +360,13 @@ func (x *SourceInfo) GetLastSeenUnixMs() int64 {
 		return x.LastSeenUnixMs
 	}
 	return 0
+}
+
+func (x *SourceInfo) GetSourceType() string {
+	if x != nil {
+		return x.SourceType
+	}
+	return ""
 }
 
 type ListSourcesResponse struct {
@@ -578,14 +586,9 @@ func (x *ListReadingsResponse) GetReadings() []*ReadingInfo {
 }
 
 type SendCommandRequest struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	SourceName string                 `protobuf:"bytes,1,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
-	// Types that are valid to be assigned to Command:
-	//
-	//	*SendCommandRequest_Cam
-	//	*SendCommandRequest_Lamppost
-	//	*SendCommandRequest_Semaphore
-	Command       isSendCommandRequest_Command `protobuf_oneof:"command"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SourceName    string                 `protobuf:"bytes,1,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
+	Lamppost      *LamppostCommand       `protobuf:"bytes,2,opt,name=lamppost,proto3" json:"lamppost,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -627,61 +630,12 @@ func (x *SendCommandRequest) GetSourceName() string {
 	return ""
 }
 
-func (x *SendCommandRequest) GetCommand() isSendCommandRequest_Command {
-	if x != nil {
-		return x.Command
-	}
-	return nil
-}
-
-func (x *SendCommandRequest) GetCam() *CamCommand {
-	if x != nil {
-		if x, ok := x.Command.(*SendCommandRequest_Cam); ok {
-			return x.Cam
-		}
-	}
-	return nil
-}
-
 func (x *SendCommandRequest) GetLamppost() *LamppostCommand {
 	if x != nil {
-		if x, ok := x.Command.(*SendCommandRequest_Lamppost); ok {
-			return x.Lamppost
-		}
+		return x.Lamppost
 	}
 	return nil
 }
-
-func (x *SendCommandRequest) GetSemaphore() *SemaphoreCommand {
-	if x != nil {
-		if x, ok := x.Command.(*SendCommandRequest_Semaphore); ok {
-			return x.Semaphore
-		}
-	}
-	return nil
-}
-
-type isSendCommandRequest_Command interface {
-	isSendCommandRequest_Command()
-}
-
-type SendCommandRequest_Cam struct {
-	Cam *CamCommand `protobuf:"bytes,2,opt,name=cam,proto3,oneof"`
-}
-
-type SendCommandRequest_Lamppost struct {
-	Lamppost *LamppostCommand `protobuf:"bytes,3,opt,name=lamppost,proto3,oneof"`
-}
-
-type SendCommandRequest_Semaphore struct {
-	Semaphore *SemaphoreCommand `protobuf:"bytes,4,opt,name=semaphore,proto3,oneof"`
-}
-
-func (*SendCommandRequest_Cam) isSendCommandRequest_Command() {}
-
-func (*SendCommandRequest_Lamppost) isSendCommandRequest_Command() {}
-
-func (*SendCommandRequest_Semaphore) isSendCommandRequest_Command() {}
 
 type SendCommandResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -747,7 +701,7 @@ var File_client_proto protoreflect.FileDescriptor
 
 const file_client_proto_rawDesc = "" +
 	"\n" +
-	"\fclient.proto\x12\x06client\x1a\tcam.proto\x1a\x0elamppost.proto\x1a\x0fsemaphore.proto\"\xe0\x01\n" +
+	"\fclient.proto\x12\x06client\x1a\x0elamppost.proto\"\xe0\x01\n" +
 	"\rClientRequest\x12?\n" +
 	"\flist_sources\x18\x01 \x01(\v2\x1a.client.ListSourcesRequestH\x00R\vlistSources\x12B\n" +
 	"\rlist_readings\x18\x02 \x01(\v2\x1b.client.ListReadingsRequestH\x00R\flistReadings\x12?\n" +
@@ -761,7 +715,7 @@ const file_client_proto_rawDesc = "" +
 	"\fsend_command\x18\x05 \x01(\v2\x1b.client.SendCommandResponseH\x00R\vsendCommandB\n" +
 	"\n" +
 	"\bresponse\"\x14\n" +
-	"\x12ListSourcesRequest\"\xc5\x01\n" +
+	"\x12ListSourcesRequest\"\xe6\x01\n" +
 	"\n" +
 	"SourceInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
@@ -770,7 +724,9 @@ const file_client_proto_rawDesc = "" +
 	"\x04port\x18\x04 \x01(\x05R\x04port\x12\"\n" +
 	"\fcontrollable\x18\x05 \x01(\bR\fcontrollable\x12\x16\n" +
 	"\x06status\x18\x06 \x01(\tR\x06status\x12)\n" +
-	"\x11last_seen_unix_ms\x18\a \x01(\x03R\x0elastSeenUnixMs\"C\n" +
+	"\x11last_seen_unix_ms\x18\a \x01(\x03R\x0elastSeenUnixMs\x12\x1f\n" +
+	"\vsource_type\x18\b \x01(\tR\n" +
+	"sourceType\"C\n" +
 	"\x13ListSourcesResponse\x12,\n" +
 	"\asources\x18\x01 \x03(\v2\x12.client.SourceInfoR\asources\"-\n" +
 	"\x13ListReadingsRequest\x12\x16\n" +
@@ -785,14 +741,11 @@ const file_client_proto_rawDesc = "" +
 	"\x04unit\x18\x05 \x01(\tR\x04unit\x12*\n" +
 	"\x11timestamp_unix_ms\x18\x06 \x01(\x03R\x0ftimestampUnixMs\"G\n" +
 	"\x14ListReadingsResponse\x12/\n" +
-	"\breadings\x18\x01 \x03(\v2\x13.client.ReadingInfoR\breadings\"\xdb\x01\n" +
+	"\breadings\x18\x01 \x03(\v2\x13.client.ReadingInfoR\breadings\"l\n" +
 	"\x12SendCommandRequest\x12\x1f\n" +
 	"\vsource_name\x18\x01 \x01(\tR\n" +
-	"sourceName\x12#\n" +
-	"\x03cam\x18\x02 \x01(\v2\x0f.cam.CamCommandH\x00R\x03cam\x127\n" +
-	"\blamppost\x18\x03 \x01(\v2\x19.lamppost.LamppostCommandH\x00R\blamppost\x12;\n" +
-	"\tsemaphore\x18\x04 \x01(\v2\x1b.semaphore.SemaphoreCommandH\x00R\tsemaphoreB\t\n" +
-	"\acommand\"n\n" +
+	"sourceName\x125\n" +
+	"\blamppost\x18\x02 \x01(\v2\x19.lamppost.LamppostCommandR\blamppost\"n\n" +
 	"\x13SendCommandResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12#\n" +
@@ -822,9 +775,7 @@ var file_client_proto_goTypes = []any{
 	(*ListReadingsResponse)(nil), // 7: client.ListReadingsResponse
 	(*SendCommandRequest)(nil),   // 8: client.SendCommandRequest
 	(*SendCommandResponse)(nil),  // 9: client.SendCommandResponse
-	(*CamCommand)(nil),           // 10: cam.CamCommand
-	(*LamppostCommand)(nil),      // 11: lamppost.LamppostCommand
-	(*SemaphoreCommand)(nil),     // 12: semaphore.SemaphoreCommand
+	(*LamppostCommand)(nil),      // 10: lamppost.LamppostCommand
 }
 var file_client_proto_depIdxs = []int32{
 	2,  // 0: client.ClientRequest.list_sources:type_name -> client.ListSourcesRequest
@@ -835,14 +786,12 @@ var file_client_proto_depIdxs = []int32{
 	9,  // 5: client.ClientResponse.send_command:type_name -> client.SendCommandResponse
 	3,  // 6: client.ListSourcesResponse.sources:type_name -> client.SourceInfo
 	6,  // 7: client.ListReadingsResponse.readings:type_name -> client.ReadingInfo
-	10, // 8: client.SendCommandRequest.cam:type_name -> cam.CamCommand
-	11, // 9: client.SendCommandRequest.lamppost:type_name -> lamppost.LamppostCommand
-	12, // 10: client.SendCommandRequest.semaphore:type_name -> semaphore.SemaphoreCommand
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	10, // 8: client.SendCommandRequest.lamppost:type_name -> lamppost.LamppostCommand
+	9,  // [9:9] is the sub-list for method output_type
+	9,  // [9:9] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_client_proto_init() }
@@ -850,9 +799,7 @@ func file_client_proto_init() {
 	if File_client_proto != nil {
 		return
 	}
-	file_cam_proto_init()
 	file_lamppost_proto_init()
-	file_semaphore_proto_init()
 	file_client_proto_msgTypes[0].OneofWrappers = []any{
 		(*ClientRequest_ListSources)(nil),
 		(*ClientRequest_ListReadings)(nil),
@@ -862,11 +809,6 @@ func file_client_proto_init() {
 		(*ClientResponse_ListSources)(nil),
 		(*ClientResponse_ListReadings)(nil),
 		(*ClientResponse_SendCommand)(nil),
-	}
-	file_client_proto_msgTypes[8].OneofWrappers = []any{
-		(*SendCommandRequest_Cam)(nil),
-		(*SendCommandRequest_Lamppost)(nil),
-		(*SendCommandRequest_Semaphore)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

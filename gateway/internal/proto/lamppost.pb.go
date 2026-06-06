@@ -29,6 +29,7 @@ type LamppostCommand struct {
 	//	*LamppostCommand_TurnOff
 	//	*LamppostCommand_GetState
 	//	*LamppostCommand_SimulateFailure
+	//	*LamppostCommand_SetLuminosity
 	Command       isLamppostCommand_Command `protobuf_oneof:"command"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -107,6 +108,15 @@ func (x *LamppostCommand) GetSimulateFailure() *LamppostSimulateFailureRequest {
 	return nil
 }
 
+func (x *LamppostCommand) GetSetLuminosity() *LamppostSetLuminosityRequest {
+	if x != nil {
+		if x, ok := x.Command.(*LamppostCommand_SetLuminosity); ok {
+			return x.SetLuminosity
+		}
+	}
+	return nil
+}
+
 type isLamppostCommand_Command interface {
 	isLamppostCommand_Command()
 }
@@ -127,6 +137,10 @@ type LamppostCommand_SimulateFailure struct {
 	SimulateFailure *LamppostSimulateFailureRequest `protobuf:"bytes,4,opt,name=simulate_failure,json=simulateFailure,proto3,oneof"`
 }
 
+type LamppostCommand_SetLuminosity struct {
+	SetLuminosity *LamppostSetLuminosityRequest `protobuf:"bytes,5,opt,name=set_luminosity,json=setLuminosity,proto3,oneof"`
+}
+
 func (*LamppostCommand_TurnOn) isLamppostCommand_Command() {}
 
 func (*LamppostCommand_TurnOff) isLamppostCommand_Command() {}
@@ -134,6 +148,8 @@ func (*LamppostCommand_TurnOff) isLamppostCommand_Command() {}
 func (*LamppostCommand_GetState) isLamppostCommand_Command() {}
 
 func (*LamppostCommand_SimulateFailure) isLamppostCommand_Command() {}
+
+func (*LamppostCommand_SetLuminosity) isLamppostCommand_Command() {}
 
 type LamppostTurnOnRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -279,19 +295,65 @@ func (*LamppostSimulateFailureRequest) Descriptor() ([]byte, []int) {
 	return file_lamppost_proto_rawDescGZIP(), []int{4}
 }
 
+type LamppostSetLuminosityRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	LuminosityPercent float64                `protobuf:"fixed64,1,opt,name=luminosity_percent,json=luminosityPercent,proto3" json:"luminosity_percent,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *LamppostSetLuminosityRequest) Reset() {
+	*x = LamppostSetLuminosityRequest{}
+	mi := &file_lamppost_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LamppostSetLuminosityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LamppostSetLuminosityRequest) ProtoMessage() {}
+
+func (x *LamppostSetLuminosityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_lamppost_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LamppostSetLuminosityRequest.ProtoReflect.Descriptor instead.
+func (*LamppostSetLuminosityRequest) Descriptor() ([]byte, []int) {
+	return file_lamppost_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *LamppostSetLuminosityRequest) GetLuminosityPercent() float64 {
+	if x != nil {
+		return x.LuminosityPercent
+	}
+	return 0
+}
+
 type LamppostResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Active        bool                   `protobuf:"varint,3,opt,name=active,proto3" json:"active,omitempty"`
-	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Success              bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message              string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Active               bool                   `protobuf:"varint,3,opt,name=active,proto3" json:"active,omitempty"`
+	Status               string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	LuminosityPercent    float64                `protobuf:"fixed64,5,opt,name=luminosity_percent,json=luminosityPercent,proto3" json:"luminosity_percent,omitempty"`
+	EnergyConsumptionKwh float64                `protobuf:"fixed64,6,opt,name=energy_consumption_kwh,json=energyConsumptionKwh,proto3" json:"energy_consumption_kwh,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *LamppostResponse) Reset() {
 	*x = LamppostResponse{}
-	mi := &file_lamppost_proto_msgTypes[5]
+	mi := &file_lamppost_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -303,7 +365,7 @@ func (x *LamppostResponse) String() string {
 func (*LamppostResponse) ProtoMessage() {}
 
 func (x *LamppostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lamppost_proto_msgTypes[5]
+	mi := &file_lamppost_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -316,7 +378,7 @@ func (x *LamppostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LamppostResponse.ProtoReflect.Descriptor instead.
 func (*LamppostResponse) Descriptor() ([]byte, []int) {
-	return file_lamppost_proto_rawDescGZIP(), []int{5}
+	return file_lamppost_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *LamppostResponse) GetSuccess() bool {
@@ -347,26 +409,100 @@ func (x *LamppostResponse) GetStatus() string {
 	return ""
 }
 
+func (x *LamppostResponse) GetLuminosityPercent() float64 {
+	if x != nil {
+		return x.LuminosityPercent
+	}
+	return 0
+}
+
+func (x *LamppostResponse) GetEnergyConsumptionKwh() float64 {
+	if x != nil {
+		return x.EnergyConsumptionKwh
+	}
+	return 0
+}
+
+type LamppostReading struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	LuminosityPercent    float64                `protobuf:"fixed64,1,opt,name=luminosity_percent,json=luminosityPercent,proto3" json:"luminosity_percent,omitempty"`
+	EnergyConsumptionKwh float64                `protobuf:"fixed64,2,opt,name=energy_consumption_kwh,json=energyConsumptionKwh,proto3" json:"energy_consumption_kwh,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *LamppostReading) Reset() {
+	*x = LamppostReading{}
+	mi := &file_lamppost_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LamppostReading) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LamppostReading) ProtoMessage() {}
+
+func (x *LamppostReading) ProtoReflect() protoreflect.Message {
+	mi := &file_lamppost_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LamppostReading.ProtoReflect.Descriptor instead.
+func (*LamppostReading) Descriptor() ([]byte, []int) {
+	return file_lamppost_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *LamppostReading) GetLuminosityPercent() float64 {
+	if x != nil {
+		return x.LuminosityPercent
+	}
+	return 0
+}
+
+func (x *LamppostReading) GetEnergyConsumptionKwh() float64 {
+	if x != nil {
+		return x.EnergyConsumptionKwh
+	}
+	return 0
+}
+
 var File_lamppost_proto protoreflect.FileDescriptor
 
 const file_lamppost_proto_rawDesc = "" +
 	"\n" +
-	"\x0elamppost.proto\x12\blamppost\"\xb0\x02\n" +
+	"\x0elamppost.proto\x12\blamppost\"\x81\x03\n" +
 	"\x0fLamppostCommand\x12:\n" +
 	"\aturn_on\x18\x01 \x01(\v2\x1f.lamppost.LamppostTurnOnRequestH\x00R\x06turnOn\x12=\n" +
 	"\bturn_off\x18\x02 \x01(\v2 .lamppost.LamppostTurnOffRequestH\x00R\aturnOff\x12@\n" +
 	"\tget_state\x18\x03 \x01(\v2!.lamppost.LamppostGetStateRequestH\x00R\bgetState\x12U\n" +
-	"\x10simulate_failure\x18\x04 \x01(\v2(.lamppost.LamppostSimulateFailureRequestH\x00R\x0fsimulateFailureB\t\n" +
+	"\x10simulate_failure\x18\x04 \x01(\v2(.lamppost.LamppostSimulateFailureRequestH\x00R\x0fsimulateFailure\x12O\n" +
+	"\x0eset_luminosity\x18\x05 \x01(\v2&.lamppost.LamppostSetLuminosityRequestH\x00R\rsetLuminosityB\t\n" +
 	"\acommand\"\x17\n" +
 	"\x15LamppostTurnOnRequest\"\x18\n" +
 	"\x16LamppostTurnOffRequest\"\x19\n" +
 	"\x17LamppostGetStateRequest\" \n" +
-	"\x1eLamppostSimulateFailureRequest\"v\n" +
+	"\x1eLamppostSimulateFailureRequest\"M\n" +
+	"\x1cLamppostSetLuminosityRequest\x12-\n" +
+	"\x12luminosity_percent\x18\x01 \x01(\x01R\x11luminosityPercent\"\xdb\x01\n" +
 	"\x10LamppostResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x16\n" +
 	"\x06active\x18\x03 \x01(\bR\x06active\x12\x16\n" +
-	"\x06status\x18\x04 \x01(\tR\x06statusB>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3"
+	"\x06status\x18\x04 \x01(\tR\x06status\x12-\n" +
+	"\x12luminosity_percent\x18\x05 \x01(\x01R\x11luminosityPercent\x124\n" +
+	"\x16energy_consumption_kwh\x18\x06 \x01(\x01R\x14energyConsumptionKwh\"v\n" +
+	"\x0fLamppostReading\x12-\n" +
+	"\x12luminosity_percent\x18\x01 \x01(\x01R\x11luminosityPercent\x124\n" +
+	"\x16energy_consumption_kwh\x18\x02 \x01(\x01R\x14energyConsumptionKwhB>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3"
 
 var (
 	file_lamppost_proto_rawDescOnce sync.Once
@@ -380,25 +516,28 @@ func file_lamppost_proto_rawDescGZIP() []byte {
 	return file_lamppost_proto_rawDescData
 }
 
-var file_lamppost_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_lamppost_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_lamppost_proto_goTypes = []any{
 	(*LamppostCommand)(nil),                // 0: lamppost.LamppostCommand
 	(*LamppostTurnOnRequest)(nil),          // 1: lamppost.LamppostTurnOnRequest
 	(*LamppostTurnOffRequest)(nil),         // 2: lamppost.LamppostTurnOffRequest
 	(*LamppostGetStateRequest)(nil),        // 3: lamppost.LamppostGetStateRequest
 	(*LamppostSimulateFailureRequest)(nil), // 4: lamppost.LamppostSimulateFailureRequest
-	(*LamppostResponse)(nil),               // 5: lamppost.LamppostResponse
+	(*LamppostSetLuminosityRequest)(nil),   // 5: lamppost.LamppostSetLuminosityRequest
+	(*LamppostResponse)(nil),               // 6: lamppost.LamppostResponse
+	(*LamppostReading)(nil),                // 7: lamppost.LamppostReading
 }
 var file_lamppost_proto_depIdxs = []int32{
 	1, // 0: lamppost.LamppostCommand.turn_on:type_name -> lamppost.LamppostTurnOnRequest
 	2, // 1: lamppost.LamppostCommand.turn_off:type_name -> lamppost.LamppostTurnOffRequest
 	3, // 2: lamppost.LamppostCommand.get_state:type_name -> lamppost.LamppostGetStateRequest
 	4, // 3: lamppost.LamppostCommand.simulate_failure:type_name -> lamppost.LamppostSimulateFailureRequest
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	5, // 4: lamppost.LamppostCommand.set_luminosity:type_name -> lamppost.LamppostSetLuminosityRequest
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_lamppost_proto_init() }
@@ -411,6 +550,7 @@ func file_lamppost_proto_init() {
 		(*LamppostCommand_TurnOff)(nil),
 		(*LamppostCommand_GetState)(nil),
 		(*LamppostCommand_SimulateFailure)(nil),
+		(*LamppostCommand_SetLuminosity)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -418,7 +558,7 @@ func file_lamppost_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_lamppost_proto_rawDesc), len(file_lamppost_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

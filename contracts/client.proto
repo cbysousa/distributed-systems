@@ -2,9 +2,7 @@ syntax = "proto3";
 
 package client;
 
-import "cam.proto";
 import "lamppost.proto";
-import "semaphore.proto";
 
 option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
 
@@ -63,12 +61,7 @@ message ListReadingsResponse {
 
 message SendCommandRequest {
   string source_name = 1;
-
-  oneof command {
-    cam.CamCommand cam = 2;
-    lamppost.LamppostCommand lamppost = 3;
-    semaphore.SemaphoreCommand semaphore = 4;
-  }
+  lamppost.LamppostCommand lamppost = 2;
 }
 
 message SendCommandResponse {

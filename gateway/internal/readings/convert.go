@@ -18,6 +18,8 @@ func packetToReadings(packet *smartpb.ReadingPacket) []state.Reading {
 		return temperatureToReadings(packet.SourceName, timestamp, reading.Temperature)
 	case *smartpb.ReadingPacket_AirQuality:
 		return airQualityToReadings(packet.SourceName, timestamp, reading.AirQuality)
+	case *smartpb.ReadingPacket_Lamppost:
+		return lamppostToReadings(packet.SourceName, timestamp, reading.Lamppost)
 	default:
 		return nil
 	}
@@ -68,6 +70,27 @@ func airQualityToReadings(sourceName string, timestamp time.Time, reading *smart
 			Metric:     "air_quality_index",
 			Value:      reading.AirQualityIndex,
 			Unit:       "aqi",
+			Timestamp:  timestamp,
+		},
+	}
+}
+
+func lamppostToReadings(sourceName string, timestamp time.Time, reading *smartpb.LamppostReading) []state.Reading {
+	return []state.Reading{
+		{
+			SourceName: sourceName,
+			SourceType: "lamppost",
+			Metric:     "luminosity_percent",
+			Value:      reading.LuminosityPercent,
+			Unit:       "percent",
+			Timestamp:  timestamp,
+		},
+		{
+			SourceName: sourceName,
+			SourceType: "lamppost",
+			Metric:     "energy_consumption_kwh",
+			Value:      reading.EnergyConsumptionKwh,
+			Unit:       "kWh",
 			Timestamp:  timestamp,
 		},
 	}
