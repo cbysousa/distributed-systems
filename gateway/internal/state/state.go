@@ -1,6 +1,7 @@
 package state
 
 import (
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -55,6 +56,11 @@ func NewGatewayState() *GatewayState {
 }
 
 func (s *GatewayState) AddDiscoveredSources(sources []discovery.Source) {
+	for key, source := range s.sources {
+		source.Status = StatusOffline
+		s.sources[key] = source
+	}
+	log.Println("sources deactivated")
 	for _, source := range sources {
 		s.AddDiscoveredSource(source)
 	}
@@ -165,20 +171,6 @@ func (s *GatewayState) ListReadings() []Reading {
 
 	readings := make([]Reading, len(s.readings))
 	copy(readings, s.readings)
-
-	return readings
-}
-
-func (s *GatewayState) ListReadingsByMetric(metric string) []Reading {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
-	readings := make([]Reading, 0)
-	for _, reading := range s.readings {
-		if reading.Metric == metric {
-			readings = append(readings, reading)
-		}
-	}
 
 	return readings
 }

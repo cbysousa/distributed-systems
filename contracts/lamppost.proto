@@ -33,9 +33,11 @@ message LamppostResponse {
   string status = 4;
   double luminosity_percent = 5;
   double energy_consumption_kwh = 6;
+  bool light_on = 7;
 }
 
 message LamppostReading {
   double luminosity_percent = 1;
   double energy_consumption_kwh = 2;
+  bool light_on = 3;
 }

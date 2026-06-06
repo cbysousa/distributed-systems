@@ -76,6 +76,11 @@ func airQualityToReadings(sourceName string, timestamp time.Time, reading *smart
 }
 
 func lamppostToReadings(sourceName string, timestamp time.Time, reading *smartpb.LamppostReading) []state.Reading {
+	lightOn := 0.0
+	if reading.LightOn {
+		lightOn = 1.0
+	}
+
 	return []state.Reading{
 		{
 			SourceName: sourceName,
@@ -91,6 +96,14 @@ func lamppostToReadings(sourceName string, timestamp time.Time, reading *smartpb
 			Metric:     "energy_consumption_kwh",
 			Value:      reading.EnergyConsumptionKwh,
 			Unit:       "kWh",
+			Timestamp:  timestamp,
+		},
+		{
+			SourceName: sourceName,
+			SourceType: "lamppost",
+			Metric:     "light_on",
+			Value:      lightOn,
+			Unit:       "boolean",
 			Timestamp:  timestamp,
 		},
 	}

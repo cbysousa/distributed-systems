@@ -51,9 +51,7 @@ message ListSourcesResponse {
   repeated SourceInfo sources = 1;
 }
 
-message ListReadingsRequest {
-  string metric = 1;
-}
+message ListReadingsRequest {}
 
 message ReadingInfo {
   string source_name = 1;
@@ -77,18 +75,23 @@ message SendCommandResponse {
   bool success = 1;
   string message = 2;
   string source_status = 3;
+  double luminosity_percent = 4;
+  bool light_on = 5;
 }
 
 message AggregateRequest {
-  string metric = 1;
-  AggregateOperation operation = 2;
-  int64 window_seconds = 3;
+  string source_name = 1;
+  string metric = 2;
+  AggregateOperation operation = 3;
+  int64 window_seconds = 4;
 }
 
 message AggregateResponse {
-  string metric = 1;
-  AggregateOperation operation = 2;
-  double value = 3;
-  int32 sample_count = 4;
-  int64 window_seconds = 5;
+  string source_name = 1;
+  string metric = 2;
+  AggregateOperation operation = 3;
+  double value = 4;
+  int32 sample_count = 5;
+  int64 window_seconds = 6;
+  string unit = 7;
 }

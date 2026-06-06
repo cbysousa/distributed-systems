@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -11,17 +10,11 @@ import (
 	"github.com/cbysousa/distributed-systems/internal/state"
 )
 
-const discoveryInterval = 10 * time.Second
+const discoveryInterval = 5 * time.Second
 
 func main() {
 	gatewayState := state.NewGatewayState()
 	discoveryConfig := discovery.DefaultConfig()
-
-	discoverSources(gatewayState, discoveryConfig)
-
-	for _, source := range gatewayState.ListSources() {
-		fmt.Println(source.Address, source.Name, source.Type, source.Controllable, source.Status)
-	}
 
 	go startPeriodicDiscovery(gatewayState, discoveryConfig)
 
@@ -41,6 +34,7 @@ func main() {
 }
 
 func startPeriodicDiscovery(gatewayState *state.GatewayState, cfg discovery.Config) {
+	discoverSources(gatewayState, cfg)
 	for {
 		time.Sleep(discoveryInterval)
 		discoverSources(gatewayState, cfg)

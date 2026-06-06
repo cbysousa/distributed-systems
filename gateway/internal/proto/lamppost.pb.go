@@ -347,6 +347,7 @@ type LamppostResponse struct {
 	Status               string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
 	LuminosityPercent    float64                `protobuf:"fixed64,5,opt,name=luminosity_percent,json=luminosityPercent,proto3" json:"luminosity_percent,omitempty"`
 	EnergyConsumptionKwh float64                `protobuf:"fixed64,6,opt,name=energy_consumption_kwh,json=energyConsumptionKwh,proto3" json:"energy_consumption_kwh,omitempty"`
+	LightOn              bool                   `protobuf:"varint,7,opt,name=light_on,json=lightOn,proto3" json:"light_on,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -423,10 +424,18 @@ func (x *LamppostResponse) GetEnergyConsumptionKwh() float64 {
 	return 0
 }
 
+func (x *LamppostResponse) GetLightOn() bool {
+	if x != nil {
+		return x.LightOn
+	}
+	return false
+}
+
 type LamppostReading struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	LuminosityPercent    float64                `protobuf:"fixed64,1,opt,name=luminosity_percent,json=luminosityPercent,proto3" json:"luminosity_percent,omitempty"`
 	EnergyConsumptionKwh float64                `protobuf:"fixed64,2,opt,name=energy_consumption_kwh,json=energyConsumptionKwh,proto3" json:"energy_consumption_kwh,omitempty"`
+	LightOn              bool                   `protobuf:"varint,3,opt,name=light_on,json=lightOn,proto3" json:"light_on,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -475,6 +484,13 @@ func (x *LamppostReading) GetEnergyConsumptionKwh() float64 {
 	return 0
 }
 
+func (x *LamppostReading) GetLightOn() bool {
+	if x != nil {
+		return x.LightOn
+	}
+	return false
+}
+
 var File_lamppost_proto protoreflect.FileDescriptor
 
 const file_lamppost_proto_rawDesc = "" +
@@ -492,17 +508,19 @@ const file_lamppost_proto_rawDesc = "" +
 	"\x17LamppostGetStateRequest\" \n" +
 	"\x1eLamppostSimulateFailureRequest\"M\n" +
 	"\x1cLamppostSetLuminosityRequest\x12-\n" +
-	"\x12luminosity_percent\x18\x01 \x01(\x01R\x11luminosityPercent\"\xdb\x01\n" +
+	"\x12luminosity_percent\x18\x01 \x01(\x01R\x11luminosityPercent\"\xf6\x01\n" +
 	"\x10LamppostResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x16\n" +
 	"\x06active\x18\x03 \x01(\bR\x06active\x12\x16\n" +
 	"\x06status\x18\x04 \x01(\tR\x06status\x12-\n" +
 	"\x12luminosity_percent\x18\x05 \x01(\x01R\x11luminosityPercent\x124\n" +
-	"\x16energy_consumption_kwh\x18\x06 \x01(\x01R\x14energyConsumptionKwh\"v\n" +
+	"\x16energy_consumption_kwh\x18\x06 \x01(\x01R\x14energyConsumptionKwh\x12\x19\n" +
+	"\blight_on\x18\a \x01(\bR\alightOn\"\x91\x01\n" +
 	"\x0fLamppostReading\x12-\n" +
 	"\x12luminosity_percent\x18\x01 \x01(\x01R\x11luminosityPercent\x124\n" +
-	"\x16energy_consumption_kwh\x18\x02 \x01(\x01R\x14energyConsumptionKwhB>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3"
+	"\x16energy_consumption_kwh\x18\x02 \x01(\x01R\x14energyConsumptionKwh\x12\x19\n" +
+	"\blight_on\x18\x03 \x01(\bR\alightOnB>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3"
 
 var (
 	file_lamppost_proto_rawDescOnce sync.Once

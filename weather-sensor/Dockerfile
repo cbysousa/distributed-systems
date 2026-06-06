@@ -4,6 +4,6 @@ WORKDIR /app
 
 RUN pip install protobuf
 
-COPY *.py .
+COPY *.py ./
 
 CMD ["python", "-u", "sensor.py"]

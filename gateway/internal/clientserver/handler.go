@@ -43,14 +43,8 @@ func handleListSources(_ *smartpb.ListSourcesRequest, gatewayState *state.Gatewa
 	}
 }
 
-func handleListReadings(request *smartpb.ListReadingsRequest, gatewayState *state.GatewayState) *smartpb.ClientResponse {
-	var readings []state.Reading
-	if request.Metric == "" {
-		readings = gatewayState.ListReadings()
-	} else {
-		readings = gatewayState.ListReadingsByMetric(request.Metric)
-	}
-
+func handleListReadings(_ *smartpb.ListReadingsRequest, gatewayState *state.GatewayState) *smartpb.ClientResponse {
+	readings := gatewayState.ListReadings()
 	protoReadings := make([]*smartpb.ReadingInfo, 0, len(readings))
 	for _, reading := range readings {
 		protoReadings = append(protoReadings, readingToProto(reading))
@@ -76,40 +70,42 @@ func errorResponse(message string) *smartpb.ClientResponse {
 
 func handleSendCommand(request *smartpb.SendCommandRequest, gatewayState *state.GatewayState) *smartpb.ClientResponse {
 	if request == nil || request.Lamppost == nil || request.Lamppost.Command == nil {
-		return sendCommandResponse(false, "missing lamppost command", "")
+		return sendCommandResponse(false, "missing lamppost command", "", 0, false)
 	}
 
 	source, exists := gatewayState.GetSource(request.SourceName)
 	if !exists {
-		return sendCommandResponse(false, "source not found", "")
+		return sendCommandResponse(false, "source not found", "", 0, false)
 	}
 
 	if !source.Controllable {
-		return sendCommandResponse(false, "source is not controllable", source.Status)
+		return sendCommandResponse(false, "source is not controllable", source.Status, 0, false)
 	}
 
 	result, err := sourcecontrol.SendCommand(source, request)
 	if err != nil {
 		gatewayState.UpdateStatus(source.Name, state.StatusOffline)
-		return sendCommandResponse(false, err.Error(), state.StatusOffline)
+		return sendCommandResponse(false, err.Error(), state.StatusOffline, 0, false)
 	}
 
 	if result.Status != "" {
 		gatewayState.UpdateStatus(source.Name, result.Status)
 	}
 
-	return sendCommandResponse(result.Success, result.Message, result.Status)
+	return sendCommandResponse(result.Success, result.Message, result.Status, result.LuminosityPercent, result.LightOn)
 }
 
-func sendCommandResponse(success bool, message string, sourceStatus string) *smartpb.ClientResponse {
+func sendCommandResponse(success bool, message string, sourceStatus string, luminosityPercent float64, lightOn bool) *smartpb.ClientResponse {
 	return &smartpb.ClientResponse{
 		Success: success,
 		Message: message,
 		Response: &smartpb.ClientResponse_SendCommand{
 			SendCommand: &smartpb.SendCommandResponse{
-				Success:      success,
-				Message:      message,
-				SourceStatus: sourceStatus,
+				Success:           success,
+				Message:           message,
+				SourceStatus:      sourceStatus,
+				LuminosityPercent: luminosityPercent,
+				LightOn:           lightOn,
 			},
 		},
 	}
@@ -118,6 +114,10 @@ func sendCommandResponse(success bool, message string, sourceStatus string) *sma
 func handleAggregate(request *smartpb.AggregateRequest, gatewayState *state.GatewayState) *smartpb.ClientResponse {
 	if request == nil {
 		return errorResponse("missing aggregate request")
+	}
+
+	if request.SourceName == "" {
+		return errorResponse("missing aggregate source")
 	}
 
 	if request.Metric == "" {
@@ -134,6 +134,7 @@ func handleAggregate(request *smartpb.AggregateRequest, gatewayState *state.Gate
 	}
 
 	result, err := analytics.Run(gatewayState.ListReadings(), analytics.Query{
+		SourceName:    request.SourceName,
 		Metric:        request.Metric,
 		Operation:     operation,
 		WindowSeconds: request.WindowSeconds,
@@ -147,9 +148,11 @@ func handleAggregate(request *smartpb.AggregateRequest, gatewayState *state.Gate
 		Message: "aggregate query executed successfully",
 		Response: &smartpb.ClientResponse_Aggregate{
 			Aggregate: &smartpb.AggregateResponse{
+				SourceName:    result.SourceName,
 				Metric:        result.Metric,
 				Operation:     request.Operation,
 				Value:         result.Value,
+				Unit:          result.Unit,
 				SampleCount:   int32(result.SampleCount),
 				WindowSeconds: result.WindowSeconds,
 			},
