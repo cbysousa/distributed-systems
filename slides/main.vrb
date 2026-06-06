@@ -1,0 +1,26 @@
+\frametitle{Formato das Consultas}
+\begin{lstlisting}[style=proto,basicstyle=\ttfamily\tiny]
+enum AggregateOperation {
+  AGGREGATE_OPERATION_AVG = 0;
+  AGGREGATE_OPERATION_STDDEV = 1;
+  AGGREGATE_OPERATION_MIN = 2;
+  AGGREGATE_OPERATION_MAX = 3;
+}
+
+message AggregateRequest {
+  string source_name = 1;
+  string metric = 2;
+  AggregateOperation operation = 3;
+  int64 window_seconds = 4;
+}
+
+message AggregateResponse {
+  string source_name = 1;
+  string metric = 2;
+  AggregateOperation operation = 3;
+  double value = 4;
+  int32 sample_count = 5;
+  int64 window_seconds = 6;
+  string unit = 7;
+}
+\end{lstlisting}
