@@ -21,6 +21,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type AggregateOperation int32
+
+const (
+	AggregateOperation_AGGREGATE_OPERATION_AVG    AggregateOperation = 0
+	AggregateOperation_AGGREGATE_OPERATION_STDDEV AggregateOperation = 1
+	AggregateOperation_AGGREGATE_OPERATION_MIN    AggregateOperation = 2
+	AggregateOperation_AGGREGATE_OPERATION_MAX    AggregateOperation = 3
+)
+
+// Enum value maps for AggregateOperation.
+var (
+	AggregateOperation_name = map[int32]string{
+		0: "AGGREGATE_OPERATION_AVG",
+		1: "AGGREGATE_OPERATION_STDDEV",
+		2: "AGGREGATE_OPERATION_MIN",
+		3: "AGGREGATE_OPERATION_MAX",
+	}
+	AggregateOperation_value = map[string]int32{
+		"AGGREGATE_OPERATION_AVG":    0,
+		"AGGREGATE_OPERATION_STDDEV": 1,
+		"AGGREGATE_OPERATION_MIN":    2,
+		"AGGREGATE_OPERATION_MAX":    3,
+	}
+)
+
+func (x AggregateOperation) Enum() *AggregateOperation {
+	p := new(AggregateOperation)
+	*p = x
+	return p
+}
+
+func (x AggregateOperation) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AggregateOperation) Descriptor() protoreflect.EnumDescriptor {
+	return file_client_proto_enumTypes[0].Descriptor()
+}
+
+func (AggregateOperation) Type() protoreflect.EnumType {
+	return &file_client_proto_enumTypes[0]
+}
+
+func (x AggregateOperation) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AggregateOperation.Descriptor instead.
+func (AggregateOperation) EnumDescriptor() ([]byte, []int) {
+	return file_client_proto_rawDescGZIP(), []int{0}
+}
+
 type ClientRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Request:
@@ -28,6 +80,7 @@ type ClientRequest struct {
 	//	*ClientRequest_ListSources
 	//	*ClientRequest_ListReadings
 	//	*ClientRequest_SendCommand
+	//	*ClientRequest_Aggregate
 	Request       isClientRequest_Request `protobuf_oneof:"request"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -97,6 +150,15 @@ func (x *ClientRequest) GetSendCommand() *SendCommandRequest {
 	return nil
 }
 
+func (x *ClientRequest) GetAggregate() *AggregateRequest {
+	if x != nil {
+		if x, ok := x.Request.(*ClientRequest_Aggregate); ok {
+			return x.Aggregate
+		}
+	}
+	return nil
+}
+
 type isClientRequest_Request interface {
 	isClientRequest_Request()
 }
@@ -113,11 +175,17 @@ type ClientRequest_SendCommand struct {
 	SendCommand *SendCommandRequest `protobuf:"bytes,3,opt,name=send_command,json=sendCommand,proto3,oneof"`
 }
 
+type ClientRequest_Aggregate struct {
+	Aggregate *AggregateRequest `protobuf:"bytes,4,opt,name=aggregate,proto3,oneof"`
+}
+
 func (*ClientRequest_ListSources) isClientRequest_Request() {}
 
 func (*ClientRequest_ListReadings) isClientRequest_Request() {}
 
 func (*ClientRequest_SendCommand) isClientRequest_Request() {}
+
+func (*ClientRequest_Aggregate) isClientRequest_Request() {}
 
 type ClientResponse struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
@@ -128,6 +196,7 @@ type ClientResponse struct {
 	//	*ClientResponse_ListSources
 	//	*ClientResponse_ListReadings
 	//	*ClientResponse_SendCommand
+	//	*ClientResponse_Aggregate
 	Response      isClientResponse_Response `protobuf_oneof:"response"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -211,6 +280,15 @@ func (x *ClientResponse) GetSendCommand() *SendCommandResponse {
 	return nil
 }
 
+func (x *ClientResponse) GetAggregate() *AggregateResponse {
+	if x != nil {
+		if x, ok := x.Response.(*ClientResponse_Aggregate); ok {
+			return x.Aggregate
+		}
+	}
+	return nil
+}
+
 type isClientResponse_Response interface {
 	isClientResponse_Response()
 }
@@ -227,11 +305,17 @@ type ClientResponse_SendCommand struct {
 	SendCommand *SendCommandResponse `protobuf:"bytes,5,opt,name=send_command,json=sendCommand,proto3,oneof"`
 }
 
+type ClientResponse_Aggregate struct {
+	Aggregate *AggregateResponse `protobuf:"bytes,6,opt,name=aggregate,proto3,oneof"`
+}
+
 func (*ClientResponse_ListSources) isClientResponse_Response() {}
 
 func (*ClientResponse_ListReadings) isClientResponse_Response() {}
 
 func (*ClientResponse_SendCommand) isClientResponse_Response() {}
+
+func (*ClientResponse_Aggregate) isClientResponse_Response() {}
 
 type ListSourcesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -697,22 +781,160 @@ func (x *SendCommandResponse) GetSourceStatus() string {
 	return ""
 }
 
+type AggregateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Metric        string                 `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
+	Operation     AggregateOperation     `protobuf:"varint,2,opt,name=operation,proto3,enum=client.AggregateOperation" json:"operation,omitempty"`
+	WindowSeconds int64                  `protobuf:"varint,3,opt,name=window_seconds,json=windowSeconds,proto3" json:"window_seconds,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AggregateRequest) Reset() {
+	*x = AggregateRequest{}
+	mi := &file_client_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AggregateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AggregateRequest) ProtoMessage() {}
+
+func (x *AggregateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_client_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AggregateRequest.ProtoReflect.Descriptor instead.
+func (*AggregateRequest) Descriptor() ([]byte, []int) {
+	return file_client_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AggregateRequest) GetMetric() string {
+	if x != nil {
+		return x.Metric
+	}
+	return ""
+}
+
+func (x *AggregateRequest) GetOperation() AggregateOperation {
+	if x != nil {
+		return x.Operation
+	}
+	return AggregateOperation_AGGREGATE_OPERATION_AVG
+}
+
+func (x *AggregateRequest) GetWindowSeconds() int64 {
+	if x != nil {
+		return x.WindowSeconds
+	}
+	return 0
+}
+
+type AggregateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Metric        string                 `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
+	Operation     AggregateOperation     `protobuf:"varint,2,opt,name=operation,proto3,enum=client.AggregateOperation" json:"operation,omitempty"`
+	Value         float64                `protobuf:"fixed64,3,opt,name=value,proto3" json:"value,omitempty"`
+	SampleCount   int32                  `protobuf:"varint,4,opt,name=sample_count,json=sampleCount,proto3" json:"sample_count,omitempty"`
+	WindowSeconds int64                  `protobuf:"varint,5,opt,name=window_seconds,json=windowSeconds,proto3" json:"window_seconds,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AggregateResponse) Reset() {
+	*x = AggregateResponse{}
+	mi := &file_client_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AggregateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AggregateResponse) ProtoMessage() {}
+
+func (x *AggregateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_client_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AggregateResponse.ProtoReflect.Descriptor instead.
+func (*AggregateResponse) Descriptor() ([]byte, []int) {
+	return file_client_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *AggregateResponse) GetMetric() string {
+	if x != nil {
+		return x.Metric
+	}
+	return ""
+}
+
+func (x *AggregateResponse) GetOperation() AggregateOperation {
+	if x != nil {
+		return x.Operation
+	}
+	return AggregateOperation_AGGREGATE_OPERATION_AVG
+}
+
+func (x *AggregateResponse) GetValue() float64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+func (x *AggregateResponse) GetSampleCount() int32 {
+	if x != nil {
+		return x.SampleCount
+	}
+	return 0
+}
+
+func (x *AggregateResponse) GetWindowSeconds() int64 {
+	if x != nil {
+		return x.WindowSeconds
+	}
+	return 0
+}
+
 var File_client_proto protoreflect.FileDescriptor
 
 const file_client_proto_rawDesc = "" +
 	"\n" +
-	"\fclient.proto\x12\x06client\x1a\x0elamppost.proto\"\xe0\x01\n" +
+	"\fclient.proto\x12\x06client\x1a\x0elamppost.proto\"\x9a\x02\n" +
 	"\rClientRequest\x12?\n" +
 	"\flist_sources\x18\x01 \x01(\v2\x1a.client.ListSourcesRequestH\x00R\vlistSources\x12B\n" +
 	"\rlist_readings\x18\x02 \x01(\v2\x1b.client.ListReadingsRequestH\x00R\flistReadings\x12?\n" +
-	"\fsend_command\x18\x03 \x01(\v2\x1a.client.SendCommandRequestH\x00R\vsendCommandB\t\n" +
-	"\arequest\"\x99\x02\n" +
+	"\fsend_command\x18\x03 \x01(\v2\x1a.client.SendCommandRequestH\x00R\vsendCommand\x128\n" +
+	"\taggregate\x18\x04 \x01(\v2\x18.client.AggregateRequestH\x00R\taggregateB\t\n" +
+	"\arequest\"\xd4\x02\n" +
 	"\x0eClientResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12@\n" +
 	"\flist_sources\x18\x03 \x01(\v2\x1b.client.ListSourcesResponseH\x00R\vlistSources\x12C\n" +
 	"\rlist_readings\x18\x04 \x01(\v2\x1c.client.ListReadingsResponseH\x00R\flistReadings\x12@\n" +
-	"\fsend_command\x18\x05 \x01(\v2\x1b.client.SendCommandResponseH\x00R\vsendCommandB\n" +
+	"\fsend_command\x18\x05 \x01(\v2\x1b.client.SendCommandResponseH\x00R\vsendCommand\x129\n" +
+	"\taggregate\x18\x06 \x01(\v2\x19.client.AggregateResponseH\x00R\taggregateB\n" +
 	"\n" +
 	"\bresponse\"\x14\n" +
 	"\x12ListSourcesRequest\"\xe6\x01\n" +
@@ -749,7 +971,22 @@ const file_client_proto_rawDesc = "" +
 	"\x13SendCommandResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12#\n" +
-	"\rsource_status\x18\x03 \x01(\tR\fsourceStatusB>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3"
+	"\rsource_status\x18\x03 \x01(\tR\fsourceStatus\"\x8b\x01\n" +
+	"\x10AggregateRequest\x12\x16\n" +
+	"\x06metric\x18\x01 \x01(\tR\x06metric\x128\n" +
+	"\toperation\x18\x02 \x01(\x0e2\x1a.client.AggregateOperationR\toperation\x12%\n" +
+	"\x0ewindow_seconds\x18\x03 \x01(\x03R\rwindowSeconds\"\xc5\x01\n" +
+	"\x11AggregateResponse\x12\x16\n" +
+	"\x06metric\x18\x01 \x01(\tR\x06metric\x128\n" +
+	"\toperation\x18\x02 \x01(\x0e2\x1a.client.AggregateOperationR\toperation\x12\x14\n" +
+	"\x05value\x18\x03 \x01(\x01R\x05value\x12!\n" +
+	"\fsample_count\x18\x04 \x01(\x05R\vsampleCount\x12%\n" +
+	"\x0ewindow_seconds\x18\x05 \x01(\x03R\rwindowSeconds*\x8b\x01\n" +
+	"\x12AggregateOperation\x12\x1b\n" +
+	"\x17AGGREGATE_OPERATION_AVG\x10\x00\x12\x1e\n" +
+	"\x1aAGGREGATE_OPERATION_STDDEV\x10\x01\x12\x1b\n" +
+	"\x17AGGREGATE_OPERATION_MIN\x10\x02\x12\x1b\n" +
+	"\x17AGGREGATE_OPERATION_MAX\x10\x03B>Z<github.com/cbysousa/distributed-systems/internal/proto;protob\x06proto3"
 
 var (
 	file_client_proto_rawDescOnce sync.Once
@@ -763,35 +1000,43 @@ func file_client_proto_rawDescGZIP() []byte {
 	return file_client_proto_rawDescData
 }
 
-var file_client_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_client_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_client_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_client_proto_goTypes = []any{
-	(*ClientRequest)(nil),        // 0: client.ClientRequest
-	(*ClientResponse)(nil),       // 1: client.ClientResponse
-	(*ListSourcesRequest)(nil),   // 2: client.ListSourcesRequest
-	(*SourceInfo)(nil),           // 3: client.SourceInfo
-	(*ListSourcesResponse)(nil),  // 4: client.ListSourcesResponse
-	(*ListReadingsRequest)(nil),  // 5: client.ListReadingsRequest
-	(*ReadingInfo)(nil),          // 6: client.ReadingInfo
-	(*ListReadingsResponse)(nil), // 7: client.ListReadingsResponse
-	(*SendCommandRequest)(nil),   // 8: client.SendCommandRequest
-	(*SendCommandResponse)(nil),  // 9: client.SendCommandResponse
-	(*LamppostCommand)(nil),      // 10: lamppost.LamppostCommand
+	(AggregateOperation)(0),      // 0: client.AggregateOperation
+	(*ClientRequest)(nil),        // 1: client.ClientRequest
+	(*ClientResponse)(nil),       // 2: client.ClientResponse
+	(*ListSourcesRequest)(nil),   // 3: client.ListSourcesRequest
+	(*SourceInfo)(nil),           // 4: client.SourceInfo
+	(*ListSourcesResponse)(nil),  // 5: client.ListSourcesResponse
+	(*ListReadingsRequest)(nil),  // 6: client.ListReadingsRequest
+	(*ReadingInfo)(nil),          // 7: client.ReadingInfo
+	(*ListReadingsResponse)(nil), // 8: client.ListReadingsResponse
+	(*SendCommandRequest)(nil),   // 9: client.SendCommandRequest
+	(*SendCommandResponse)(nil),  // 10: client.SendCommandResponse
+	(*AggregateRequest)(nil),     // 11: client.AggregateRequest
+	(*AggregateResponse)(nil),    // 12: client.AggregateResponse
+	(*LamppostCommand)(nil),      // 13: lamppost.LamppostCommand
 }
 var file_client_proto_depIdxs = []int32{
-	2,  // 0: client.ClientRequest.list_sources:type_name -> client.ListSourcesRequest
-	5,  // 1: client.ClientRequest.list_readings:type_name -> client.ListReadingsRequest
-	8,  // 2: client.ClientRequest.send_command:type_name -> client.SendCommandRequest
-	4,  // 3: client.ClientResponse.list_sources:type_name -> client.ListSourcesResponse
-	7,  // 4: client.ClientResponse.list_readings:type_name -> client.ListReadingsResponse
-	9,  // 5: client.ClientResponse.send_command:type_name -> client.SendCommandResponse
-	3,  // 6: client.ListSourcesResponse.sources:type_name -> client.SourceInfo
-	6,  // 7: client.ListReadingsResponse.readings:type_name -> client.ReadingInfo
-	10, // 8: client.SendCommandRequest.lamppost:type_name -> lamppost.LamppostCommand
-	9,  // [9:9] is the sub-list for method output_type
-	9,  // [9:9] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	3,  // 0: client.ClientRequest.list_sources:type_name -> client.ListSourcesRequest
+	6,  // 1: client.ClientRequest.list_readings:type_name -> client.ListReadingsRequest
+	9,  // 2: client.ClientRequest.send_command:type_name -> client.SendCommandRequest
+	11, // 3: client.ClientRequest.aggregate:type_name -> client.AggregateRequest
+	5,  // 4: client.ClientResponse.list_sources:type_name -> client.ListSourcesResponse
+	8,  // 5: client.ClientResponse.list_readings:type_name -> client.ListReadingsResponse
+	10, // 6: client.ClientResponse.send_command:type_name -> client.SendCommandResponse
+	12, // 7: client.ClientResponse.aggregate:type_name -> client.AggregateResponse
+	4,  // 8: client.ListSourcesResponse.sources:type_name -> client.SourceInfo
+	7,  // 9: client.ListReadingsResponse.readings:type_name -> client.ReadingInfo
+	13, // 10: client.SendCommandRequest.lamppost:type_name -> lamppost.LamppostCommand
+	0,  // 11: client.AggregateRequest.operation:type_name -> client.AggregateOperation
+	0,  // 12: client.AggregateResponse.operation:type_name -> client.AggregateOperation
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_client_proto_init() }
@@ -804,24 +1049,27 @@ func file_client_proto_init() {
 		(*ClientRequest_ListSources)(nil),
 		(*ClientRequest_ListReadings)(nil),
 		(*ClientRequest_SendCommand)(nil),
+		(*ClientRequest_Aggregate)(nil),
 	}
 	file_client_proto_msgTypes[1].OneofWrappers = []any{
 		(*ClientResponse_ListSources)(nil),
 		(*ClientResponse_ListReadings)(nil),
 		(*ClientResponse_SendCommand)(nil),
+		(*ClientResponse_Aggregate)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_client_proto_rawDesc), len(file_client_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   10,
+			NumEnums:      1,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_client_proto_goTypes,
 		DependencyIndexes: file_client_proto_depIdxs,
+		EnumInfos:         file_client_proto_enumTypes,
 		MessageInfos:      file_client_proto_msgTypes,
 	}.Build()
 	File_client_proto = out.File

@@ -1,77 +1,408 @@
 import socket
+import struct
+from datetime import datetime
+
+import client_pb2
+import lamppost_pb2
 
 
 GATEWAY_HOST = "127.0.0.1"
-GATEWAY_PORT = 8080
+GATEWAY_PORT = 12000
 
 
-def receive(sock):
-    data = sock.recv(4096)
-    if not data:
-        return None
-    return data.decode("utf-8")
+def read_exact(sock, size):
+    data = b""
+    while len(data) < size:
+        chunk = sock.recv(size - len(data))
+        if not chunk:
+            raise ConnectionError("conexao encerrada pelo Gateway")
+        data += chunk
+    return data
 
 
-def send_command(sock, command):
-    sock.sendall((command + "\n").encode("utf-8"))
-    return receive(sock)
+def read_message(sock):
+    header = read_exact(sock, 4)
+    message_size = struct.unpack(">I", header)[0]
+    return read_exact(sock, message_size)
 
 
-def main():
-    print("Cliente Analítico - Cidade Inteligente")
-    print(f"Conectando ao Gateway em {GATEWAY_HOST}:{GATEWAY_PORT}...")
+def write_message(sock, payload):
+    sock.sendall(struct.pack(">I", len(payload)) + payload)
 
+
+def send_request(request):
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((GATEWAY_HOST, GATEWAY_PORT))
-    except ConnectionRefusedError:
-        print("Erro: Gateway indisponível.")
-        print("Verifique se o container do Gateway está em execução.")
+        with socket.create_connection((GATEWAY_HOST, GATEWAY_PORT), timeout=5) as sock:
+            write_message(sock, request.SerializeToString())
+            response_data = read_message(sock)
+    except OSError as error:
+        print(f"Erro ao conectar no Gateway: {error}")
+        return None
+    except ConnectionError as error:
+        print(f"Erro de conexao: {error}")
+        return None
+
+    response = client_pb2.ClientResponse()
+    try:
+        response.ParseFromString(response_data)
+    except Exception as error:
+        print(f"Resposta invalida do Gateway: {error}")
+        return None
+
+    return response
+
+
+def request_list_sources():
+    return client_pb2.ClientRequest(
+        list_sources=client_pb2.ListSourcesRequest(),
+    )
+
+
+def request_list_readings(metric=""):
+    return client_pb2.ClientRequest(
+        list_readings=client_pb2.ListReadingsRequest(metric=metric),
+    )
+
+
+def request_lamppost_command(source_name, command):
+    return client_pb2.ClientRequest(
+        send_command=client_pb2.SendCommandRequest(
+            source_name=source_name,
+            lamppost=command,
+        ),
+    )
+
+
+def request_aggregate(metric, operation, window_seconds):
+    return client_pb2.ClientRequest(
+        aggregate=client_pb2.AggregateRequest(
+            metric=metric,
+            operation=operation,
+            window_seconds=window_seconds,
+        ),
+    )
+
+
+def print_sources(response):
+    if not response or not response.HasField("list_sources"):
+        print_gateway_message(response)
         return
 
-    try:
-        msg = receive(sock)
-        if msg:
-            print(msg, end="")
+    sources = response.list_sources.sources
+    if not sources:
+        print("Nenhuma fonte de dados encontrada.")
+        return
 
-        msg = receive(sock)
-        if msg:
-            print(msg, end="")
+    print("\nFontes de dados:")
+    print("-" * 96)
+    print(f"{'Nome':<24} {'Tipo':<16} {'Status':<10} {'Controlavel':<12} {'Endereco':<22} Last seen")
+    print("-" * 96)
 
-        while True:
-            print("\nMenu:")
-            print("1 - Listar fontes descobertas")
-            print("2 - Ajuda")
-            print("0 - Sair")
+    for source in sources:
+        last_seen = format_timestamp(source.last_seen_unix_ms)
+        controllable = "sim" if source.controllable else "nao"
+        address = source.address or "-"
+        print(
+            f"{source.name:<24} {source.source_type:<16} {source.status:<10} "
+            f"{controllable:<12} {address:<22} {last_seen}"
+        )
 
-            option = input("Escolha uma opção: ").strip()
 
-            if option == "1":
-                command = "LIST"
-            elif option == "2":
-                command = "HELP"
-            elif option == "0":
-                response = send_command(sock, "EXIT")
-                if response:
-                    print(response, end="")
-                break
-            else:
-                print("Opção inválida.")
+def print_readings(response):
+    if not response or not response.HasField("list_readings"):
+        print_gateway_message(response)
+        return
+
+    readings = response.list_readings.readings
+    if not readings:
+        print("Nenhuma leitura encontrada.")
+        return
+
+    print("\nLeituras:")
+    print("-" * 112)
+    print(f"{'Fonte':<24} {'Tipo':<14} {'Metrica':<28} {'Valor':<12} {'Unidade':<10} Timestamp")
+    print("-" * 112)
+
+    for reading in readings:
+        timestamp = format_timestamp(reading.timestamp_unix_ms)
+        print(
+            f"{reading.source_name:<24} {reading.source_type:<14} {reading.metric:<28} "
+            f"{reading.value:<12.2f} {reading.unit:<10} {timestamp}"
+        )
+
+
+def print_command_response(response):
+    if not response or not response.HasField("send_command"):
+        print_gateway_message(response)
+        return
+
+    command = response.send_command
+    status = command.source_status or "-"
+    result = "sucesso" if command.success else "falha"
+
+    print(f"\nResultado: {result}")
+    print(f"Mensagem: {command.message}")
+    print(f"Status da fonte: {status}")
+
+
+def print_aggregate_response(response):
+    if not response or not response.HasField("aggregate"):
+        print_gateway_message(response)
+        return
+
+    aggregate = response.aggregate
+    window = "todas as leituras" if aggregate.window_seconds <= 0 else f"ultimos {aggregate.window_seconds}s"
+
+    print("\nResultado da consulta analitica:")
+    print(f"Metrica: {aggregate.metric}")
+    print(f"Operacao: {aggregate_operation_name(aggregate.operation)}")
+    print(f"Valor: {aggregate.value:.4f}")
+    print(f"Amostras: {aggregate.sample_count}")
+    print(f"Janela: {window}")
+
+
+def print_gateway_message(response):
+    if response:
+        print(f"Mensagem do Gateway: {response.message}")
+
+
+def format_timestamp(timestamp_unix_ms):
+    if timestamp_unix_ms <= 0:
+        return "-"
+
+    return datetime.fromtimestamp(timestamp_unix_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def list_sources():
+    response = send_request(request_list_sources())
+    print_sources(response)
+
+
+def list_readings(metric=""):
+    response = send_request(request_list_readings(metric))
+    print_readings(response)
+
+
+def aggregate_query():
+    print("\nMetricas comuns:")
+    print("- temperature_celsius")
+    print("- humidity_percent")
+    print("- co2_ppm")
+    print("- particulate_matter_ug_m3")
+    print("- air_quality_index")
+    print("- luminosity_percent")
+    print("- energy_consumption_kwh")
+
+    metric = input("Digite a metrica: ").strip()
+    if not metric:
+        print("Metrica obrigatoria.")
+        return
+
+    operation = read_aggregate_operation()
+    if operation is None:
+        return
+
+    window_seconds = read_window_seconds()
+    if window_seconds is None:
+        return
+
+    response = send_request(request_aggregate(metric, operation, window_seconds))
+    print_aggregate_response(response)
+
+
+def get_controllable_sources():
+    response = send_request(request_list_sources())
+    if not response or not response.HasField("list_sources"):
+        print_gateway_message(response)
+        return []
+
+    return [source for source in response.list_sources.sources if source.controllable]
+
+
+def select_controllable_source():
+    sources = get_controllable_sources()
+    if not sources:
+        print("Nenhuma fonte controlavel encontrada.")
+        return None
+
+    print("\nFontes controlaveis:")
+    for index, source in enumerate(sources, start=1):
+        print(f"{index}. {source.name} | tipo={source.source_type} | status={source.status}")
+    print("0. Voltar")
+
+    while True:
+        option = input("Escolha uma fonte: ").strip()
+        if option == "0":
+            return None
+
+        try:
+            source_index = int(option)
+        except ValueError:
+            print("Opcao invalida.")
+            continue
+
+        if 1 <= source_index <= len(sources):
+            return sources[source_index - 1]
+
+        print("Opcao invalida.")
+
+
+def adjust_controllable_source():
+    source = select_controllable_source()
+    if not source:
+        return
+
+    while True:
+        print(f"\n=== Ajustar fonte controlavel: {source.name} ===")
+        print("1. Ligar fonte")
+        print("2. Desligar fonte temporariamente")
+        print("3. Consultar estado")
+        print("4. Ajustar luminosidade")
+        print("0. Voltar")
+
+        option = input("Escolha uma opcao: ").strip()
+
+        if option == "1":
+            command = lamppost_pb2.LamppostCommand(
+                turn_on=lamppost_pb2.LamppostTurnOnRequest(),
+            )
+        elif option == "2":
+            command = lamppost_pb2.LamppostCommand(
+                turn_off=lamppost_pb2.LamppostTurnOffRequest(),
+            )
+        elif option == "3":
+            command = lamppost_pb2.LamppostCommand(
+                get_state=lamppost_pb2.LamppostGetStateRequest(),
+            )
+        elif option == "4":
+            luminosity = read_luminosity()
+            if luminosity is None:
                 continue
+            command = lamppost_pb2.LamppostCommand(
+                set_luminosity=lamppost_pb2.LamppostSetLuminosityRequest(
+                    luminosity_percent=luminosity,
+                ),
+            )
+        elif option == "0":
+            return
+        else:
+            print("Opcao invalida.")
+            continue
 
-            response = send_command(sock, command)
+        response = send_request(request_lamppost_command(source.name, command))
+        print_command_response(response)
 
-            if response is None:
-                print("Conexão encerrada pelo Gateway.")
-                break
 
-            print("\nResposta do Gateway:")
-            print(response, end="")
+def simulate_failure():
+    source = select_controllable_source()
+    if not source:
+        return
 
-    finally:
-        sock.close()
-        print("Cliente encerrado.")
+    command = lamppost_pb2.LamppostCommand(
+        simulate_failure=lamppost_pb2.LamppostSimulateFailureRequest(),
+    )
+    response = send_request(request_lamppost_command(source.name, command))
+    print_command_response(response)
+
+
+def read_luminosity():
+    value = input("Luminosidade de 0 a 100: ").strip()
+    try:
+        luminosity = float(value)
+    except ValueError:
+        print("Valor invalido.")
+        return None
+
+    if luminosity < 0 or luminosity > 100:
+        print("A luminosidade deve estar entre 0 e 100.")
+        return None
+
+    return luminosity
+
+
+def read_aggregate_operation():
+    print("\nOperacoes:")
+    print("1. Media")
+    print("2. Desvio padrao")
+    print("3. Minimo")
+    print("4. Maximo")
+
+    option = input("Escolha uma operacao: ").strip()
+
+    if option == "1":
+        return client_pb2.AGGREGATE_OPERATION_AVG
+    if option == "2":
+        return client_pb2.AGGREGATE_OPERATION_STDDEV
+    if option == "3":
+        return client_pb2.AGGREGATE_OPERATION_MIN
+    if option == "4":
+        return client_pb2.AGGREGATE_OPERATION_MAX
+
+    print("Operacao invalida.")
+    return None
+
+
+def read_window_seconds():
+    value = input("Janela em segundos (0 para todas as leituras): ").strip()
+    if value == "":
+        return 0
+
+    try:
+        window_seconds = int(value)
+    except ValueError:
+        print("Janela invalida.")
+        return None
+
+    if window_seconds < 0:
+        print("A janela nao pode ser negativa.")
+        return None
+
+    return window_seconds
+
+
+def aggregate_operation_name(operation):
+    names = {
+        client_pb2.AGGREGATE_OPERATION_AVG: "AVG",
+        client_pb2.AGGREGATE_OPERATION_STDDEV: "STDDEV",
+        client_pb2.AGGREGATE_OPERATION_MIN: "MIN",
+        client_pb2.AGGREGATE_OPERATION_MAX: "MAX",
+    }
+
+    return names.get(operation, "UNKNOWN")
+
+
+def main_menu():
+    while True:
+        print("\n=== Cliente Analitico ===")
+        print("1. Listar fontes de dados")
+        print("2. Listar todas as leituras")
+        print("3. Listar leituras por metrica")
+        print("4. Ajustar fonte controlavel")
+        print("5. Simular falha em fonte controlavel")
+        print("6. Consulta analitica agregada")
+        print("0. Sair")
+
+        option = input("Escolha uma opcao: ").strip()
+
+        if option == "1":
+            list_sources()
+        elif option == "2":
+            list_readings()
+        elif option == "3":
+            metric = input("Digite a metrica: ").strip()
+            list_readings(metric)
+        elif option == "4":
+            adjust_controllable_source()
+        elif option == "5":
+            simulate_failure()
+        elif option == "6":
+            aggregate_query()
+        elif option == "0":
+            print("Cliente encerrado.")
+            return
+        else:
+            print("Opcao invalida.")
 
 
 if __name__ == "__main__":
-    main()
+    main_menu()

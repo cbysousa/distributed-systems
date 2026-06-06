@@ -3,6 +3,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY client.py .
+RUN pip install protobuf
 
-CMD ["python", "client.py"]
+COPY *.py .
+
+CMD ["python", "-u", "client.py"]
