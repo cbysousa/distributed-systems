@@ -24,9 +24,10 @@ services:
     network_mode: host
     
   client:
-    build:
-      context: ./client
-    container_name: analytical-client
-    network_mode: host
-    stdin_open: true
-    tty: true
+  build:
+    context: .
+    dockerfile: client/Dockerfile
+  container_name: analytical-client
+  network_mode: host
+  stdin_open: true
+  tty: tru
