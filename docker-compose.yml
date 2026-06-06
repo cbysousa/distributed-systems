@@ -31,3 +31,10 @@ services:
   network_mode: host
   stdin_open: true
   tty: tru
+
+  traffic_sensor:
+  build:
+    context: .
+    dockerfile: traffic-sensor/Dockerfile
+  container_name: traffic-sensor
+  network_mode: host

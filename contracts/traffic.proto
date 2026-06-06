@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package traffic;
+
+option go_package = "github.com/cbysousa/distributed-systems/internal/proto;proto";
+
+message TrafficReading {
+  double vehicles_per_minute = 1;
+}
