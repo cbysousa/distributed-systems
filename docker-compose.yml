@@ -31,7 +31,7 @@ services:
     container_name: lamppost
     network_mode: host
 
- client:
+  client:
     build:
       context: ./client
     container_name: analytical-client
@@ -45,15 +45,3 @@ services:
     network_mode: host
     stdin_open: true
     tty: true
-
-  weather-sensor:
-    build:
-      context: ./weather-sensor
-    container_name: weather-sensor
-    network_mode: host
-
-  air-quality-sensor:
-    build:
-      context: ./air-quality-sensor
-    container_name: air-quality-sensor
-    network_mode: host
