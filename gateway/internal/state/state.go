@@ -1,7 +1,6 @@
 package state
 
 import (
-	"log"
 	"strings"
 	"sync"
 	"time"
@@ -60,7 +59,6 @@ func (s *GatewayState) AddDiscoveredSources(sources []discovery.Source) {
 		source.Status = StatusOffline
 		s.sources[key] = source
 	}
-	log.Println("sources deactivated")
 	for _, source := range sources {
 		s.AddDiscoveredSource(source)
 	}

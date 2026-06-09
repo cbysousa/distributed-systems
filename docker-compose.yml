@@ -1,16 +1,11 @@
 services:
-  cam:
-    build:
-      context: ./cam
-    container_name: cam-listener
-    network_mode: host
-
   gateway:
     build:
       context: ./gateway
     container_name: gateway
     environment:
       - HISTORY_CSV_PATH=/app/data/readings.csv
+    network_mode: host
     volumes:
       - ./data:/app/data
 
@@ -38,7 +33,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - GATEWAY_HOST=gateway
+      - GATEWAY_HOST=127.0.0.1
       - GATEWAY_PORT=12000
     depends_on:
       - gateway
