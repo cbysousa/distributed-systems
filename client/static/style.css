@@ -48,6 +48,25 @@ main {
     margin-top: 0;
 }
 
+.gateway-check {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 180px;
+    gap: 12px;
+    align-items: start;
+}
+
+.gateway-check h2 {
+    margin-bottom: 0;
+}
+
+.gateway-check button {
+    margin-top: 0;
+}
+
+.gateway-check .message {
+    grid-column: 1 / -1;
+}
+
 label {
     display: block;
     margin-top: 12px;
@@ -166,6 +185,20 @@ th {
     color: #3730a3;
 }
 
+.message.warning {
+    margin-top: 0;
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
+}
+
+.message.ok {
+    margin-top: 0;
+    background: #ecfdf5;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
 .status-summary strong {
     display: block;
     margin-bottom: 10px;
@@ -223,6 +256,10 @@ th {
     .button-row,
     .inline-control,
     .status-summary dl {
+        grid-template-columns: 1fr;
+    }
+
+    .gateway-check {
         grid-template-columns: 1fr;
     }
 }

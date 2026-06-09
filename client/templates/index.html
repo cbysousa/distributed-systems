@@ -15,6 +15,15 @@
     </header>
 
     <main>
+        <section class="card gateway-check">
+            <div>
+                <h2>Gateway</h2>
+                <p class="helper-text">Teste manual da conexão TCP entre o cliente e o Gateway.</p>
+            </div>
+            <button onclick="checkGateway()">Verificar Gateway</button>
+            <div id="gatewayStatus" class="message warning hidden"></div>
+        </section>
+
         <section class="layout">
             <div class="card">
                 <h2>Filtros</h2>
@@ -131,6 +140,6 @@
         </section>
     </main>
 
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=gateway-check-2"></script>
 </body>
 </html>

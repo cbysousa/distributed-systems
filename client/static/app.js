@@ -1,17 +1,38 @@
 let sources = [];
 let metricsBySourceType = {};
+const GATEWAY_UNAVAILABLE_MESSAGE = "Gateway indisponivel. O cliente continua aberto e tentara reconectar automaticamente.";
 
 async function refreshAll() {
-    await loadSources();
-    await loadReadings();
+    const sourcesLoaded = await loadSources();
+    if (sourcesLoaded) {
+        await loadReadings();
+    }
 }
 
 async function loadSources() {
-    const response = await fetch("/api/sources");
-    const data = await response.json();
+    const data = await fetchJson("/api/sources");
 
     if (!data.success) {
-        alert(data.message || "Erro ao carregar fontes.");
+        showGatewayStatus(GATEWAY_UNAVAILABLE_MESSAGE);
+        return false;
+    }
+
+    hideGatewayStatus();
+    sources = data.sources;
+    metricsBySourceType = data.metrics_by_source_type;
+
+    renderSourcesTable();
+    renderSourceOptions();
+    renderMetricOptions();
+    renderControlPanel();
+    return true;
+}
+
+async function checkGateway() {
+    const data = await fetchJson("/api/sources");
+
+    if (!data.success) {
+        showGatewayStatus(GATEWAY_UNAVAILABLE_MESSAGE, "warning");
         return;
     }
 
@@ -22,7 +43,11 @@ async function loadSources() {
     renderSourceOptions();
     renderMetricOptions();
     renderControlPanel();
+
+    showGatewayStatus(`Gateway ativo. Respondeu via TCP com ${sources.length} fonte(s) descoberta(s).`, "ok");
 }
+
+window.checkGateway = checkGateway;
 
 function renderSourcesTable() {
     const table = document.getElementById("sourcesTable");
@@ -141,14 +166,15 @@ async function loadReadings() {
         metric: metric,
     });
 
-    const response = await fetch(`/api/readings?${params.toString()}`);
-    const data = await response.json();
+    const data = await fetchJson(`/api/readings?${params.toString()}`);
 
     if (!data.success) {
-        alert(data.message || "Erro ao carregar leituras.");
+        showGatewayStatus(GATEWAY_UNAVAILABLE_MESSAGE);
+        showChartMessage("Gateway indisponivel. As ultimas leituras permanecem na tela.");
         return;
     }
 
+    hideGatewayStatus();
     const readings = data.readings.slice(-100);
 
     renderReadingsTable(readings);
@@ -193,8 +219,7 @@ function drawChart(readings) {
     ctx.clearRect(0, 0, width, height);
 
     if (!readings || readings.length < 2) {
-        message.classList.remove("hidden");
-        message.textContent = "Ainda não há leituras suficientes para desenhar a série temporal.";
+        showChartMessage("Ainda não há leituras suficientes para desenhar a série temporal.");
         return;
     }
 
@@ -277,7 +302,7 @@ async function runAggregate() {
     const operation = document.getElementById("operationSelect").value;
     const windowSeconds = Number(document.getElementById("windowInput").value || 0);
 
-    const response = await fetch("/api/aggregate", {
+    const data = await fetchJson("/api/aggregate", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -290,16 +315,17 @@ async function runAggregate() {
         }),
     });
 
-    const data = await response.json();
     const result = document.getElementById("aggregateResult");
 
     result.classList.remove("hidden");
 
     if (!data.success || !data.aggregate) {
+        showGatewayStatus(GATEWAY_UNAVAILABLE_MESSAGE);
         result.textContent = data.message || "Erro na consulta agregada.";
         return;
     }
 
+    hideGatewayStatus();
     result.textContent =
         `Resultado: ${data.aggregate.value.toFixed(4)} ${data.aggregate.unit || ""} ` +
         `(${data.aggregate.sample_count} amostras)`;
@@ -318,12 +344,15 @@ async function lamppostCommand(action) {
 
     const source = selectedSource.name;
 
-    const response = await fetch(`/api/lamppost/${source}/${action}`, {
+    const data = await fetchJson(`/api/lamppost/${source}/${action}`, {
         method: "POST",
     });
 
-    const data = await response.json();
-
+    if (!data.success) {
+        showGatewayStatus(GATEWAY_UNAVAILABLE_MESSAGE);
+    } else {
+        hideGatewayStatus();
+    }
     await showCommandResult(data);
     await refreshAll();
 }
@@ -342,7 +371,7 @@ async function setLuminosity() {
     const source = selectedSource.name;
     const luminosity = Number(document.getElementById("luminosityInput").value || 0);
 
-    const response = await fetch(`/api/lamppost/${source}/luminosity`, {
+    const data = await fetchJson(`/api/lamppost/${source}/luminosity`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -352,8 +381,11 @@ async function setLuminosity() {
         }),
     });
 
-    const data = await response.json();
-
+    if (!data.success) {
+        showGatewayStatus(GATEWAY_UNAVAILABLE_MESSAGE);
+    } else {
+        hideGatewayStatus();
+    }
     await showCommandResult(data);
     await refreshAll();
 }
@@ -379,8 +411,7 @@ function hideCommandResult() {
 
 async function loadLatestReadingsByMetric(sourceName) {
     const params = new URLSearchParams({ source: sourceName });
-    const response = await fetch(`/api/readings?${params.toString()}`);
-    const data = await response.json();
+    const data = await fetchJson(`/api/readings?${params.toString()}`);
     const latest = {};
 
     if (!data.success) {
@@ -392,6 +423,40 @@ async function loadLatestReadingsByMetric(sourceName) {
     }
 
     return latest;
+}
+
+async function fetchJson(url, options) {
+    try {
+        const response = await fetch(url, options);
+        return await response.json();
+    } catch (error) {
+        return {
+            success: false,
+            message: `Gateway indisponivel ou cliente sem resposta: ${error.message}`,
+        };
+    }
+}
+
+function showGatewayStatus(message, kind = "warning") {
+    const status = document.getElementById("gatewayStatus");
+    status.textContent = message;
+    status.classList.toggle("ok", kind === "ok");
+    status.classList.toggle("warning", kind !== "ok");
+    status.classList.remove("hidden");
+}
+
+function hideGatewayStatus() {
+    const status = document.getElementById("gatewayStatus");
+    status.classList.add("hidden");
+    status.classList.remove("ok");
+    status.classList.add("warning");
+    status.textContent = "";
+}
+
+function showChartMessage(messageText) {
+    const message = document.getElementById("chartMessage");
+    message.textContent = messageText;
+    message.classList.remove("hidden");
 }
 
 function renderCommandSnapshot(container, command, source, readings) {
@@ -448,4 +513,4 @@ function formatTime(timestampUnixMs) {
 window.addEventListener("resize", loadReadings);
 
 refreshAll();
-setInterval(loadReadings, 5000);
+setInterval(refreshAll, 5000);
