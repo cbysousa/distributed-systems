@@ -1,10 +1,9 @@
-
 FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN pip install protobuf
+RUN pip install protobuf flask
 
-COPY *.py ./
+COPY . .
 
-CMD ["python", "-u", "client.py"]
+CMD ["python", "-u", "web_client.py"]

@@ -2,6 +2,7 @@ package readings
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"strconv"
 
@@ -10,7 +11,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func StartUDPServer(cfg Config, gatewayState *state.GatewayState) error {
+type HistoryStore interface {
+	AppendReadings(readings []state.Reading) error
+}
+
+func StartUDPServer(cfg Config, gatewayState *state.GatewayState, historyStore HistoryStore) error {
 	addr, err := net.ResolveUDPAddr("udp4", net.JoinHostPort(cfg.ListenAddress, strconv.Itoa(cfg.ListenPort)))
 	if err != nil {
 		return err
@@ -43,6 +48,12 @@ func StartUDPServer(cfg Config, gatewayState *state.GatewayState) error {
 		gatewayState.AddReadings(readings)
 		gatewayState.UpdateLastSeen(packet.SourceName)
 		gatewayState.UpdateStatus(packet.SourceName, state.StatusActive)
+
+		if historyStore != nil {
+			if err := historyStore.AppendReadings(readings); err != nil {
+				log.Printf("failed to persist readings from %s: %v", packet.SourceName, err)
+			}
+		}
 
 		fmt.Printf("received %d readings from %s\n", len(readings), packet.SourceName)
 	}

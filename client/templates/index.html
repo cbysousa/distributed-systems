@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cliente Analítico - Cidade Inteligente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Cliente Analítico</h1>
+        <p>Interface Web para monitoramento, controle e séries temporais da cidade inteligente.</p>
+    </header>
+
+    <main>
+        <section class="layout">
+            <div class="card">
+                <h2>Filtros</h2>
+
+                <label for="sourceSelect">Fonte</label>
+                <select id="sourceSelect"></select>
+
+                <label for="metricSelect">Métrica</label>
+                <select id="metricSelect"></select>
+
+                <button onclick="refreshAll()">Atualizar</button>
+
+                <hr>
+
+                <h3>Consulta agregada</h3>
+
+                <label for="operationSelect">Operação</label>
+                <select id="operationSelect">
+                    <option value="avg">Média</option>
+                    <option value="stddev">Desvio padrão</option>
+                    <option value="min">Mínimo</option>
+                    <option value="max">Máximo</option>
+                </select>
+
+                <label for="windowInput">Janela em segundos</label>
+                <input id="windowInput" type="number" min="0" value="0">
+
+                <button onclick="runAggregate()">Executar consulta</button>
+
+                <div id="aggregateResult" class="message hidden"></div>
+            </div>
+
+            <div class="card">
+                <h2>Série temporal</h2>
+                <canvas id="chart"></canvas>
+                <div id="chartMessage" class="message hidden"></div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Fontes descobertas</h2>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>Controlável</th>
+                            <th>Endereço</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sourcesTable"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card" id="controlCard">
+            <h2>Controle da fonte</h2>
+
+            <div id="controlUnavailable" class="message hidden"></div>
+
+            <div id="lamppostControls" class="hidden">
+                <div class="control-group">
+                    <h3>Estado</h3>
+                    <p class="helper-text">Consulta o poste sem alterar a luz.</p>
+                    <button onclick="lamppostCommand('state')">Ver estado atual</button>
+                </div>
+
+                <div class="control-group">
+                    <h3>Luz</h3>
+                    <p class="helper-text">Liga, apaga ou muda o brilho do poste.</p>
+                    <div class="button-row">
+                        <button onclick="lamppostCommand('turn-on')">Acender luz</button>
+                        <button onclick="lamppostCommand('turn-off')">Apagar luz</button>
+                    </div>
+
+                    <label for="luminosityInput">Brilho desejado (%)</label>
+                    <div class="inline-control">
+                        <input id="luminosityInput" type="number" min="0" max="100" value="70">
+                        <button onclick="setLuminosity()">Definir brilho</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Falha</h3>
+                    <p class="helper-text">Coloca o poste offline temporariamente para demonstrar indisponibilidade.</p>
+                    <button class="danger" onclick="lamppostCommand('failure')">Simular pane por 15s</button>
+                </div>
+            </div>
+
+            <div id="commandResult" class="message hidden"></div>
+        </section>
+
+        <section class="card">
+            <h2>Últimas leituras</h2>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fonte</th>
+                            <th>Tipo</th>
+                            <th>Métrica</th>
+                            <th>Valor</th>
+                            <th>Unidade</th>
+                            <th>Horário</th>
+                        </tr>
+                    </thead>
+                    <tbody id="readingsTable"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

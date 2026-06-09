@@ -3,24 +3,34 @@ services:
     build:
       context: ./gateway
     container_name: gateway
-    network_mode: host
+    environment:
+      - HISTORY_CSV_PATH=/app/data/readings.csv
+    volumes:
+      - ./data:/app/data
 
   weather-sensor:
     build:
       context: ./weather-sensor
     container_name: weather-sensor
-    network_mode: host
 
   air-quality-sensor:
     build:
       context: ./air-quality-sensor
     container_name: air-quality-sensor
-    network_mode: host
-
 
   lamppost:
     build:
       context: ./lamppost
     container_name: lamppost
-    network_mode: host
 
+  client:
+    build:
+      context: ./client
+    container_name: analytical-client
+    ports:
+      - "5000:5000"
+    environment:
+      - GATEWAY_HOST=gateway
+      - GATEWAY_PORT=12000
+    depends_on:
+      - gateway
