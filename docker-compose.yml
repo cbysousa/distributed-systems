@@ -1,4 +1,10 @@
 services:
+  cam:
+    build:
+      context: ./cam
+    container_name: cam-listener
+    network_mode: host
+
   gateway:
     build:
       context: ./gateway
@@ -12,18 +18,20 @@ services:
     build:
       context: ./weather-sensor
     container_name: weather-sensor
+    network_mode: host
 
   air-quality-sensor:
     build:
       context: ./air-quality-sensor
     container_name: air-quality-sensor
-
+    network_mode: host
   lamppost:
     build:
       context: ./lamppost
     container_name: lamppost
+    network_mode: host
 
-  client:
+ client:
     build:
       context: ./client
     container_name: analytical-client

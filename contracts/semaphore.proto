@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+enum SemaphoreState {
+  Red = 0;
+  Yellow = 1;
+  Green = 2;
+}
+
+message ChangeStateMessage {}
+message ChangeStateResponse {
+  int32 timer = 1;
+}
+
+message GetStateMessage {}
+message GetStateResponse {
+  SemaphoreState state = 1;
+  int32 timer = 2;
+}
+
+
+
