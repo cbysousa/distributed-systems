@@ -44,7 +44,8 @@
   \begin{itemize}
     \item Implementar um sistema distribuido para coleta, controle e consulta de dados urbanos.
     \item Integrar tres fontes de dados: clima, qualidade do ar e poste inteligente.
-    \item Centralizar descoberta, leituras, controle e consultas em um Gateway.
+    \item Centralizar descoberta, leituras, historico, controle e consultas em um Gateway.
+    \item Disponibilizar uma interface web analitica para visualizacao e operacao do sistema.
     \item Usar mensagens padronizadas com Protocol Buffers entre os processos.
   \end{itemize}
 \end{frame}
@@ -53,7 +54,7 @@
   \begin{enumerate}
     \item Descoberta dinamica das fontes de dados pelo Gateway.
     \item Recebimento e armazenamento de leituras das fontes.
-    \item Cliente analitico para listagem, controle e consultas agregadas.
+    \item Cliente web analitico para visualizacao, controle e consultas agregadas.
   \end{enumerate}
 
   \vspace{0.4cm}
@@ -64,48 +65,69 @@
 
 \begin{frame}{Arquitetura Geral}
   \centering
-  \begin{tikzpicture}[node distance=1.4cm, every node/.style={font=\small, align=center}]
-    \node[draw, rounded corners, fill=blue!10, minimum width=2.8cm, minimum height=1cm] (gateway) {Gateway\\Go};
-    \node[draw, rounded corners, fill=green!10, above left=1.1cm and 2.2cm of gateway, minimum width=2.8cm] (weather) {weather-sensor\\Python};
-    \node[draw, rounded corners, fill=green!10, left=2.7cm of gateway, minimum width=2.8cm] (air) {air-quality-sensor\\Python};
-    \node[draw, rounded corners, fill=green!10, below left=1.1cm and 2.2cm of gateway, minimum width=2.8cm] (lamp) {lamppost\\Python};
-    \node[draw, rounded corners, fill=orange!12, right=2.8cm of gateway, minimum width=2.8cm] (client) {Cliente analitico\\Python};
+  \resizebox{0.9\textwidth}{!}{%
+  \begin{tikzpicture}[
+    every node/.style={font=\small, align=center},
+    box/.style={draw, rounded corners, minimum width=2.8cm, minimum height=0.95cm}
+  ]
+    \node[box, fill=green!10] (weather) at (-4.8, 2.0) {weather-sensor\\Python};
+    \node[box, fill=green!10] (air) at (-4.8, 0) {air-quality-sensor\\Python};
+    \node[box, fill=green!10] (lamp) at (-4.8, -2.0) {lamppost\\Python};
 
-    \draw[->, thick] (gateway) -- node[above, sloped] {UDP multicast discovery} (weather);
-    \draw[->, thick] (gateway) -- node[above] {UDP multicast discovery} (air);
-    \draw[->, thick] (gateway) -- node[below, sloped] {UDP multicast discovery} (lamp);
+    \node[box, fill=blue!10] (gateway) at (0, 0) {Gateway\\Go};
+    \node[box, fill=gray!12] (csv) at (0, -2.0) {Historico CSV\\readings.csv};
+    \node[box, fill=orange!12] (flask) at (4.2, 0) {Cliente Web\\Flask};
+    \node[box, fill=orange!5] (browser) at (7.8, 0) {Navegador\\HTML/JS};
 
-    \draw[->, dashed, thick] (weather) -- node[below, sloped] {UDP readings} (gateway);
-    \draw[->, dashed, thick] (air) -- node[below] {UDP readings} (gateway);
-    \draw[->, dashed, thick] (lamp) -- node[below, sloped] {UDP readings} (gateway);
+    \draw[->, thick, blue] (gateway) to[bend left=18] (weather);
+    \draw[->, thick, blue] (gateway) to[bend left=12] (air);
+    \draw[->, thick, blue] (gateway) to[bend right=18] (lamp);
 
-    \draw[<->, thick] (gateway) -- node[above] {TCP} (client);
-    \draw[<->, thick, bend right=25] (gateway) to node[below] {TCP controle} (lamp);
+    \draw[->, dashed, thick] (weather) to[bend left=8] (gateway);
+    \draw[->, dashed, thick] (air) to[bend left=8] (gateway);
+    \draw[->, dashed, thick] (lamp) to[bend right=8] (gateway);
+
+    \draw[<->, thick, red] (gateway.south west) .. controls (-1.2,-3.1) and (-3.8,-3.1) .. (lamp.south east);
+    \draw[<->, thick] (gateway) -- (flask);
+    \draw[<->, thick] (flask) -- (browser);
+    \draw[<->, thick] (gateway) -- (csv);
   \end{tikzpicture}
+  }
+
+  \vspace{0.25cm}
+  \begin{minipage}{0.9\textwidth}
+    \scriptsize
+    \textcolor{blue}{linha azul}: discovery UDP multicast \texttt{239.0.0.1:9999}\\
+    linha tracejada: leituras UDP \texttt{:11000}\\
+    \textcolor{red}{linha vermelha}: controle TCP do \texttt{lamppost} \texttt{:10002}\\
+    linha preta: TCP + Protobuf \texttt{:12000}, HTTP \texttt{:5000} e persistencia CSV
+  \end{minipage}
 \end{frame}
 
 \begin{frame}{Processos e Portas}
+  \small
   \begin{table}
     \centering
     \begin{tabular}{lll}
       \toprule
       Processo & Linguagem & Papel \\
       \midrule
-      Gateway & Go & Descoberta e registro de informações dos sensores \\
+      Gateway & Go & Descoberta, estado, historico, leituras e TCP \\
       weather-sensor & Python & Sensor de Temperatura e umidade \\
       air-quality-sensor & Python & Sensor de CO2, particulados e indice de ar \\
-      lamppost & Python & Enviar dados de luminosidade e gasto de energia\\
-      Cliente & Python & Interface analitica interativa \\
+      lamppost & Python & Fonte controlavel de luminosidade e energia\\
+      Cliente Web & Python/Flask & Interface web analitica \\
       \bottomrule
     \end{tabular}
   \end{table}
 
-  \vspace{0.2cm}
+  \vspace{-0.1cm}
   \begin{itemize}
     \item Discovery UDP multicast: \texttt{239.0.0.1:9999}
     \item Servidor UDP (Gateway): \texttt{11000}
     \item Servidor TCP (Gateway): \texttt{12000}
     \item Servidor de Controle TCP (Lamppost): \texttt{10002}
+    \item Cliente Web Flask: \texttt{5000}
   \end{itemize}
 \end{frame}
 
@@ -115,6 +137,8 @@
     \item Cada fonte responde por UDP usando \texttt{DiscoveryResponse} serializado com Protobuf.
     \item A resposta informa nome, tipo, endereco de controle e status operacional.
     \item O Gateway registra as fontes em um estado central protegido por \texttt{sync.RWMutex}.
+    \item A descoberta periodica ocorre a cada 5 segundos.
+    \item Fontes conhecidas que nao respondem a uma rodada sao marcadas como \texttt{OFFLINE}.
   \end{itemize}
 
 \end{frame}
@@ -145,6 +169,7 @@ message DiscoveryResponse {
     \item Cada pacote contem o nome da fonte, timestamp e uma leitura tipada.
     \item O campo \texttt{oneof} permite reaproveitar o mesmo envelope para diferentes sensores.
     \item O Gateway converte as leituras recebidas em metricas internas com valor, unidade e timestamp.
+    \item As leituras sao mantidas em memoria e persistidas em arquivo CSV.
   \end{itemize}
 \end{frame}
 
@@ -206,14 +231,25 @@ message LamppostReading {
       \bottomrule
     \end{tabular}
   \end{table}
+  \begin{block}{Observacao}
+    \texttt{light\_on} e armazenado como valor numerico booleano: \texttt{1.0} para ligado e \texttt{0.0} para desligado.
+  \end{block}
 \end{frame}
 
-\begin{frame}{Parte 3: Cliente Analitico}
+\begin{frame}{Historico Persistente no Gateway}
   \begin{itemize}
-    \item Cliente interativo implementado em Python.
-    \item Conecta ao Gateway por TCP na porta \texttt{12000}.
-    \item Usa mensagens Protobuf em \texttt{ClientRequest} e \texttt{ClientResponse}.
-    \item Permite listar fontes, listar leituras, controlar o lamppost e executar consultas agregadas.
+    \item O Gateway armazena as leituras em memoria para consultas durante a execucao.
+    \item As leituras tambem sao persistidas em CSV para preservar historico entre reinicializacoes.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Parte 3: Cliente Web Analitico}
+  \begin{itemize}
+    \item Cliente implementado como aplicacao web em Python com Flask.
+    \item O navegador acessa a interface HTTP na porta \texttt{5000}.
+    \item O backend Flask usa \texttt{gateway\_api.py} para falar com o Gateway por TCP.
+    \item A comunicacao Flask-Gateway usa \texttt{ClientRequest} e \texttt{ClientResponse} em Protobuf.
+    \item A tela atualiza os dados periodicamente e apresenta graficos de serie temporal.
   \end{itemize}
 
   \begin{block}{Framing TCP}
@@ -221,8 +257,22 @@ message LamppostReading {
   \end{block}
 \end{frame}
 
+\begin{frame}{Funcionalidades do Cliente Web}
+  \begin{itemize}
+    \item Listagem de fontes descobertas e respectivos estados.
+    \item Listagem das leituras recentes recebidas pelo Gateway.
+    \item Filtro por fonte e metrica para visualizacao no grafico.
+    \item Consultas agregadas com \texttt{AVG}, \texttt{STDDEV}, \texttt{MIN} e \texttt{MAX}.
+    \item Painel de controle do \texttt{lamppost}: ligar, desligar, consultar, ajustar luminosidade e simular falha.
+    \item Atualizacao automatica da interface a cada 5 segundos.
+  \end{itemize}
+\end{frame}
+
 \begin{frame}[fragile]{Mensagens Cliente-Gateway}
-\begin{lstlisting}[style=proto]
+\footnotesize
+  A interface web conversa por HTTP com o backend Flask. O backend traduz as operacoes da tela para mensagens TCP/Protobuf enviadas ao Gateway.
+\vspace{0.15cm}
+\begin{lstlisting}[style=proto,basicstyle=\ttfamily\tiny]
 message ClientRequest {
   oneof request {
     ListSourcesRequest list_sources = 1;
@@ -275,7 +325,8 @@ message ReadingInfo {
     \item O \texttt{lamppost} é a unica fonte controlavel.
     \item O Gateway envia comandos por TCP para a porta \texttt{10002}.
     \item A fonte responde com status operacional, luminosidade, consumo e estado da luz.
-    \item A fonte tem como atributos configuraveis a luminosidade e o estado da luz (ligado e desligado)
+    \item A fonte tem como atributos configuraveis a luminosidade e o estado da luz.
+    \item O consumo de energia acumulado e exibido a partir das leituras mais recentes.
   \end{itemize}
 
 \end{frame}
@@ -327,6 +378,7 @@ message SendCommandResponse {
     \item Operacoes suportadas: \texttt{AVG (Média)}, \texttt{STDDEV (Desvio Padrão)}, \texttt{MIN (Mínimo)} e \texttt{MAX (Máximo)}.
     \item O Gateway filtra leituras por \texttt{source\_name (Nome da fonte)}, \texttt{metric (Métrica)} e \texttt{window\_seconds (Intervalo de tempo em segundos)}.
     \item A resposta inclui valor, unidade, quantidade de amostras e janela usada.
+    \item Quando \texttt{window\_seconds = 0}, todo o historico disponivel e considerado.
   \end{itemize}
 \end{frame}
 
@@ -361,10 +413,11 @@ message AggregateResponse {
 \begin{frame}{Simulacao de Falhas}
   \small
   \begin{itemize}
-    \item O comando \texttt{simulate\_failure} é enviado ao \texttt{lamppost}.
+    \item A mensagem \texttt{simulate\_failure} é enviado ao \texttt{lamppost}.
     \item A fonte responde ao comando e entra em falha temporaria por 15 segundos.
     \item Durante a falha, o \texttt{lamppost} nao responde discovery, nao envia leituras e nao responde mensagens TCP.
-    \item O Gateway marca como offline na próxima tentativa de descoberta, quando a fonte não responde.
+    \item O Gateway marca como \texttt{OFFLINE} quando a fonte nao responde a uma rodada de descoberta.
+    \item Se um comando TCP for enviado durante a falha, o Gateway tambem trata o erro como indisponibilidade da fonte.
   \end{itemize}
 \end{frame}
 
@@ -375,13 +428,15 @@ message AggregateResponse {
       \toprule
       Tecnologia & Uso \\
       \midrule
-      Go & Gateway \\
-      Python & Fontes de dados e cliente interativo \\
+      Go & Gateway, estado central, UDP/TCP, analytics e CSV \\
+      Python & Fontes de dados e backend do cliente \\
+      Flask & Servidor HTTP do cliente web \\
+      HTML/CSS/JavaScript & Interface, atualizacao automatica e grafico \\
       Protocol Buffers & Contratos e serializacao das mensagens \\
       UDP multicast & Descoberta de fontes \\
       UDP unicast & Envio de leituras ao Gateway \\
-      TCP & Cliente-Gateway e controle do lamppost \\
-      Docker & Execucao dos processos principais \\
+      TCP & Flask-Gateway e controle do lamppost \\
+      CSV & Persistencia do historico de leituras \\
       \bottomrule
     \end{tabular}
   \end{table}
@@ -390,11 +445,13 @@ message AggregateResponse {
 \begin{frame}{Organizacao do Codigo}
   \begin{itemize}
     \item \texttt{contracts/}: arquivos \texttt{.proto} compartilhados.
-    \item \texttt{gateway/}: descoberta, estado, leituras, cliente TCP, analytics e controle.
+    \item \texttt{gateway/}: descoberta, estado, leituras, cliente TCP, analytics, historico e controle.
     \item \texttt{weather-sensor/}: fonte de temperatura e umidade.
     \item \texttt{air-quality-sensor/}: fonte de qualidade do ar.
     \item \texttt{lamppost/}: Poste de luz, fonte controlavel.
-    \item \texttt{client/}: cliente analitico interativo.
+    \item \texttt{client/web\_client.py}: servidor Flask do cliente web.
+    \item \texttt{client/gateway\_api.py}: camada TCP/Protobuf entre Flask e Gateway.
+    \item \texttt{client/templates/} e \texttt{client/static/}: interface web.
   \end{itemize}
 \end{frame}
 
@@ -402,7 +459,8 @@ message AggregateResponse {
   \begin{itemize}
     \item O sistema integra processos independentes com comunicacao UDP e TCP.
     \item Protocol Buffers padroniza as mensagens entre Go e Python.
-    \item O Gateway centraliza estado, leituras, controle e consultas agregadas.
+    \item O Gateway centraliza estado, leituras, historico, controle e consultas agregadas.
+    \item O cliente web permite visualizar series temporais, consultar agregados e controlar a fonte atuadora.
     \item A fonte controlavel permite demonstrar comandos, estado operacional e falhas temporarias.
   \end{itemize}
 \end{frame}
